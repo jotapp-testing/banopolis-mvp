@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bañópolis</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body { margin: 0; font-family: sans-serif; }
+  #map { height: 100vh; width: 100%; }
+  .form-popup label { display: block; margin-top: 6px; font-size: 13px; }
+  .form-popup input, .form-popup select, .form-popup textarea { width: 100%; box-sizing: border-box; }
+  .form-popup button { margin-top: 8px; width: 100%; padding: 6px; }
+  #titulo {
+    position: absolute; top: 10px; left: 50px; z-index: 1000;
+    background: white; padding: 6px 14px; border-radius: 8px;
+    font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+
+<div id="titulo">🚽 Bañópolis</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDs-Zyr8SJwtka8jhaaUGU7o32msthek20",
+    authDomain: "banopolis-mvp.firebaseapp.com",
+    projectId: "banopolis-mvp",
+    storageBucket: "banopolis-mvp.firebasestorage.app",
+    messagingSenderId: "724783807966",
+    appId: "1:724783807966:web:a931902d099cbbe7c6b14f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const banosCol = collection(db, "banos");
+
+  // Mapa centrado en Buenos Aires
+  const map = L.map('map').setView([-34.6037, -58.3816], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  function popupContenido(data) {
+    return `
+      <b>${data.nombre}</b><br>
+      ${data.gratis ? "Gratis" : "Pago"} · Limpieza: ${data.limpieza}/5 · 
+      ${data.accesible ? "♿ Accesible" : "No accesible"}<br>
+      <i>${data.comentario || ""}</i>
+    `;
+  }
+
+  // Cargar baños existentes
+  async function cargarBanos() {
+    const snapshot = await getDocs(banosCol);
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupContenido(data));
+    });
+  }
+  cargarBanos();
+
+  // Al hacer click en el mapa, abrir formulario para agregar baño
+  map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    const formHtml = `
+      <div class="form-popup">
+        <label>Nombre del lugar</label>
+        <input type="text" id="nombre" placeholder="Ej: Café Martínez Palermo">
+        <label>¿Es gratis?</label>
+        <select id="gratis">
+          <option value="true">Gratis</option>
+          <option value="false">Pago</option>
+        </select>
+        <label>Limpieza (1 a 5)</label>
+        <input type="number" id="limpieza" min="1" max="5" value="3">
+        <label>¿Accesible?</label>
+        <select id="accesible">
+          <option value="false">No</option>
+          <option value="true">Sí</option>
+        </select>
+        <label>Comentario</label>
+        <textarea id="comentario" rows="2"></textarea>
+        <button id="guardarBtn">Guardar baño</button>
+      </div>
+    `;
+
+    const popup = L.popup().setLatLng(e.latlng).setContent(formHtml).openOn(map);
+
+    setTimeout(() => {
+      document.getElementById('guardarBtn').addEventListener('click', async () => {
+        const nombre = document.getElementById('nombre').value || "Sin nombre";
+        const gratis = document.getElementById('gratis').value === "true";
+        const limpieza = Number(document.getElementById('limpieza').value);
+        const accesible = document.getElementById('accesible').value === "true";
+        const comentario = document.getElementById('comentario').value;
+
+        const nuevoBano = { nombre, gratis, limpieza, accesible, comentario, lat, lng };
+        await addDoc(banosCol, nuevoBano);
+
+        L.marker([lat, lng]).addTo(map).bindPopup(popupContenido(nuevoBano));
+        map.closePopup();
+      });
+    }, 100);
+  });
+</script>
+
+</body>
+</html>
