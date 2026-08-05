@@ -18,7 +18,6 @@
   body { margin: 0; font-family: -apple-system, "Segoe UI", Arial, sans-serif; }
   #map { height: 100vh; width: 100%; }
 
-  /* ---------- Barra superior ---------- */
   #topBar {
     position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
     background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.2);
@@ -46,7 +45,6 @@
   }
   .filtro-chip.chip-active { background: #2d7dd2; border-color: #2d7dd2; color: white; }
 
-  /* ---------- Botón ubicación estilo Google Maps ---------- */
   #locateBtn {
     position: absolute; bottom: 24px; right: 10px; z-index: 1000;
     background: white; border: none; border-radius: 50%;
@@ -58,7 +56,6 @@
   #locateBtn:active { background: #eee; }
   #locateBtn svg { width: 22px; height: 22px; }
 
-  /* ---------- Panel de resultados (lista) ---------- */
   #resultsToggle {
     position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
     z-index: 1000; background: white; border: none; border-radius: 20px;
@@ -75,8 +72,20 @@
     padding: 10px 6px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer;
   }
   .result-item:active { background: #f5f5f5; }
+  .result-dist { color: #2d7dd2; font-weight: 600; }
 
-  /* ---------- Modal de bienvenida ---------- */
+  /* Banner de permiso de ubicación denegado */
+  #locBanner {
+    position: absolute; bottom: 80px; left: 10px; right: 10px; z-index: 1400;
+    background: #fff3e0; border: 1px solid #e07a1f; border-radius: 10px;
+    padding: 10px 12px; font-size: 13px; color: #7a4a10;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+  }
+  #locBanner button {
+    display: block; margin-top: 6px; background: none; border: none;
+    color: #2d7dd2; font-weight: bold; font-size: 12px; padding: 0; cursor: pointer;
+  }
+
   #modalOverlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 2000; display: flex; align-items: center; justify-content: center;
@@ -96,7 +105,6 @@
   }
   .hidden { display: none !important; }
 
-  /* ---------- Formulario (crear baño / dejar reseña) ---------- */
   .form-popup { font-size: 14px; width: 250px; }
   .form-popup h3 { margin: 0 0 10px; font-size: 16px; color: #222; }
   .form-popup label {
@@ -145,6 +153,11 @@
     border-radius: 8px; margin-bottom: 6px;
   }
   .estrellas-view { color: #f5b301; }
+  .dist-badge {
+    display: inline-block; background: #e3edfa; color: #1c5ca3;
+    padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    margin-top: 4px;
+  }
   .warn-badge {
     background: #fdecd8; color: #b45f14; padding: 6px 8px;
     border-radius: 6px; font-size: 12px; margin-top: 6px;
@@ -172,16 +185,19 @@
   </div>
   <div id="topBarSearchRow">
     <input type="text" id="buscador" placeholder="Buscar baño por nombre...">
-    <button id="filtrosBtn" title="Filtros">🔍</button>
+    <button id="filtrosBtn" title="Filtros">⚙️</button>
   </div>
   <div id="panelFiltros" class="hidden">
     <div class="filtro-chip" id="chipGratis">Solo gratis</div>
     <div class="filtro-chip" id="chipAccesible">Solo accesibles</div>
+    <div class="filtro-chip" id="chipCerca">Cerca mío (800m)</div>
     <div class="filtro-chip" id="chipOrden">Mejor puntuados primero</div>
   </div>
 </div>
 
 <div id="map"></div>
+
+<div id="locBanner" class="hidden"></div>
 
 <button id="locateBtn" title="Ir a mi ubicación">
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -201,8 +217,8 @@
       <li><b>Tocá un pin</b> para ver detalles, dejar tu reseña o reportarlo si ya no existe.</li>
       <li><b>Tocá cualquier punto vacío del mapa</b> para agregar un baño nuevo.</li>
       <li>Usá 🔍 para buscar, ⚙️ para filtrar, y 📍 para ir a tu ubicación.</li>
+      <li>Te vamos a pedir permiso de ubicación para mostrarte los baños más cercanos.</li>
     </ul>
-    <p><i>Es un proyecto en construcción — cuantos más baños carguemos entre todos, más útil se vuelve. ¡Gracias por sumarte!</i></p>
     <button id="cerrarModalBtn">Entendido, vamos</button>
   </div>
 </div>
@@ -240,15 +256,79 @@
   let banosCache = [];
   let filtroSoloGratis = false;
   let filtroSoloAccesible = false;
+  let filtroCerca = false;
   let ordenarMejorPuntuados = false;
   let textoBusqueda = '';
 
+  // ---------- Geolocalización ----------
+  let userPos = null;
+  let centradoInicialHecho = false;
+  const RADIO_CERCA_M = 800;
+
+  function haversineMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function formatDistancia(m) {
+    if (m < 1000) return `${Math.round(m)} m`;
+    return `${(m / 1000).toFixed(1)} km`;
+  }
+
+  function distanciaA(b) {
+    if (!userPos) return null;
+    return haversineMeters(userPos.lat, userPos.lng, b.lat, b.lng);
+  }
+
+  function mostrarBannerPermisoDenegado() {
+    const banner = document.getElementById('locBanner');
+    const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    banner.innerHTML = `
+      📍 No tenemos tu ubicación, así que no podemos mostrarte los baños más cercanos.<br>
+      ${esIOS
+        ? 'En iPhone: andá a Ajustes → Bañópolis (o Safari) → Ubicación → "Permitir".'
+        : 'En Android: tocá el candado/ícono junto a la dirección → Permisos → Ubicación → "Permitir".'}
+      <button id="cerrarBanner">Entendido</button>
+    `;
+    banner.classList.remove('hidden');
+    document.getElementById('cerrarBanner').addEventListener('click', () => banner.classList.add('hidden'));
+  }
+
+  function pedirUbicacion(centrarSiEsPrimeraVez) {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        document.getElementById('locBanner').classList.add('hidden');
+        if (centrarSiEsPrimeraVez && !centradoInicialHecho) {
+          map.setView([userPos.lat, userPos.lng], 15);
+          centradoInicialHecho = true;
+        }
+        actualizarMapa();
+      },
+      (err) => {
+        if (err.code === 1) mostrarBannerPermisoDenegado();
+      },
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
+  }
+
   // ---------- Modal de bienvenida ----------
   const modalOverlay = document.getElementById('modalOverlay');
-  if (localStorage.getItem('banopolis_visto')) modalOverlay.classList.add('hidden');
+  const yaVisto = localStorage.getItem('banopolis_visto');
+  if (yaVisto) {
+    modalOverlay.classList.add('hidden');
+    pedirUbicacion(true);
+  }
   document.getElementById('cerrarModalBtn').addEventListener('click', () => {
     modalOverlay.classList.add('hidden');
     localStorage.setItem('banopolis_visto', 'true');
+    pedirUbicacion(true);
   });
   document.getElementById('infoBtn').addEventListener('click', () => {
     modalOverlay.classList.remove('hidden');
@@ -293,6 +373,7 @@
     const avgTxt = b.numResenas > 0
       ? `${estrellasTexto(Math.round(b.avgLimpieza))} (${b.avgLimpieza.toFixed(1)}/5 · ${b.numResenas} reseña${b.numResenas > 1 ? 's' : ''})`
       : 'Sin reseñas todavía';
+    const dist = distanciaA(b);
     return `
       <div class="popup-info">
         ${b.fotoUrl ? `<img src="${b.fotoUrl}" onerror="this.style.display='none'">` : ''}
@@ -300,6 +381,7 @@
         ${b.gratis ? '🟢 Gratis' : '🟠 Pago'} · ${cat.label}<br>
         <span class="estrellas-view">${avgTxt}</span><br>
         ${b.accesible ? '♿ Accesible' : '🚫 No accesible'}
+        ${dist !== null ? `<br><span class="dist-badge">📍 a ${formatDistancia(dist)}</span>` : ''}
         ${b.reportes >= 3 ? `<div class="warn-badge">⚠️ Varios usuarios reportaron que ya no existe o está cerrado</div>` : ''}
         <div class="popup-actions">
           <a href="${gmapsUrl}" target="_blank">📍 Cómo llegar</a>
@@ -422,7 +504,6 @@
     if (btnReport) btnReport.addEventListener('click', (ev) => { ev.preventDefault(); reportarBano(btnReport.dataset.id); });
   });
 
-  // ---------- Cargar baños ----------
   async function cargarBanos() {
     try {
       const snapshot = await getDocs(banosCol);
@@ -467,13 +548,16 @@
     }
   }
 
-  // ---------- Filtros / búsqueda / lista ----------
   function actualizarMapa() {
     markersLayer.clearLayers();
-    const filtrados = banosCache.filter(b => {
+    let filtrados = banosCache.filter(b => {
       if (filtroSoloGratis && !b.gratis) return false;
       if (filtroSoloAccesible && !b.accesible) return false;
       if (textoBusqueda && !b.nombre.toLowerCase().includes(textoBusqueda.toLowerCase())) return false;
+      if (filtroCerca) {
+        const d = distanciaA(b);
+        if (d === null || d > RADIO_CERCA_M) return false;
+      }
       return true;
     });
     filtrados.forEach(b => markersLayer.addLayer(b.marker));
@@ -481,16 +565,20 @@
   }
 
   function actualizarListaResultados(filtrados) {
-    const ordenados = ordenarMejorPuntuados
-      ? [...filtrados].sort((a, b) => b.avgLimpieza - a.avgLimpieza)
-      : filtrados;
+    let ordenados = [...filtrados];
+    if (ordenarMejorPuntuados) {
+      ordenados.sort((a, b) => b.avgLimpieza - a.avgLimpieza);
+    } else if (userPos) {
+      ordenados.sort((a, b) => distanciaA(a) - distanciaA(b));
+    }
     document.getElementById('resultsCount').textContent = ordenados.length;
     const panel = document.getElementById('resultsPanel');
     panel.innerHTML = ordenados.map(b => {
       const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
       const estrellas = b.numResenas > 0 ? estrellasTexto(Math.round(b.avgLimpieza)) : 'Sin reseñas';
+      const d = distanciaA(b);
       return `<div class="result-item" data-id="${b.id}">
-        <b>${cat.emoji} ${b.nombre}</b><br>
+        <b>${cat.emoji} ${b.nombre}</b> ${d !== null ? `<span class="result-dist">· ${formatDistancia(d)}</span>` : ''}<br>
         <span class="estrellas-view">${estrellas}</span> · ${b.gratis ? 'Gratis' : 'Pago'}
       </div>`;
     }).join('') || '<div class="result-item">Sin resultados</div>';
@@ -517,6 +605,10 @@
   document.getElementById('chipAccesible').addEventListener('click', function () {
     filtroSoloAccesible = !filtroSoloAccesible; toggleChip(this, filtroSoloAccesible); actualizarMapa();
   });
+  document.getElementById('chipCerca').addEventListener('click', function () {
+    if (!userPos) { pedirUbicacion(false); }
+    filtroCerca = !filtroCerca; toggleChip(this, filtroCerca); actualizarMapa();
+  });
   document.getElementById('chipOrden').addEventListener('click', function () {
     ordenarMejorPuntuados = !ordenarMejorPuntuados; toggleChip(this, ordenarMejorPuntuados); actualizarMapa();
   });
@@ -530,22 +622,22 @@
     compartir(location.origin + location.pathname, 'Encontrá baños cerca tuyo con Bañópolis 🚽');
   });
 
-  // ---------- Botón de ubicación ----------
   document.getElementById('locateBtn').addEventListener('click', () => {
     if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
-        map.setView([latitude, longitude], 16);
-        L.circleMarker([latitude, longitude], {
+        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        document.getElementById('locBanner').classList.add('hidden');
+        map.setView([userPos.lat, userPos.lng], 16);
+        L.circleMarker([userPos.lat, userPos.lng], {
           radius: 8, color: '#4285F4', fillColor: '#4285F4', fillOpacity: 0.8, weight: 3
         }).addTo(map).bindPopup("Estás acá").openPopup();
+        actualizarMapa();
       },
-      () => alert('No pudimos acceder a tu ubicación. Revisá los permisos del navegador.')
+      (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); else alert('No pudimos acceder a tu ubicación.'); }
     );
   });
 
-  // ---------- Agregar baño nuevo ----------
   map.on('click', function (e) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
@@ -669,5 +761,6 @@
     });
   }
 </script>
+
 </body>
 </html>
