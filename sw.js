@@ -1,4 +1,4 @@
-const CACHE_NAME = 'banopolis-v1';
+const CACHE_NAME = 'banopolis-v2';
 const urlsToCache = [
   './',
   './index.html',

@@ -153,6 +153,23 @@
     border-radius: 8px; margin-bottom: 6px;
   }
   .estrellas-view { color: #f5b301; }
+  .user-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #4285F4; border: 3px solid white;
+    box-shadow: 0 0 0 2px rgba(66,133,244,0.4);
+    position: relative;
+  }
+  .user-dot::after {
+    content: '';
+    position: absolute; top: -9px; left: -9px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(66,133,244,0.25);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
   .dist-badge {
     display: inline-block; background: #e3edfa; color: #1c5ca3;
     padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;
@@ -219,6 +236,8 @@
       <li>Usá 🔍 para buscar, ⚙️ para filtrar, y 📍 para ir a tu ubicación.</li>
       <li>Te vamos a pedir permiso de ubicación para mostrarte los baños más cercanos.</li>
     </ul>
+    <p style="font-size:11px;color:#999;">Lorem ipsum dolor sit amet — versión de prueba v2 — si ves este texto gris, tenés la última versión cargada.</p>
+    </ul>
     <button id="cerrarModalBtn">Entendido, vamos</button>
   </div>
 </div>
@@ -263,7 +282,20 @@
   // ---------- Geolocalización ----------
   let userPos = null;
   let centradoInicialHecho = false;
-  const RADIO_CERCA_M = 800;
+const RADIO_CERCA_M = 800;
+
+  let userMarker = null;
+  function iconoUsuario() {
+    return L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [18, 18], iconAnchor: [9, 9] });
+  }
+  function actualizarMarcadorUsuario() {
+    if (!userPos) return;
+    if (userMarker) {
+      userMarker.setLatLng([userPos.lat, userPos.lng]);
+    } else {
+      userMarker = L.marker([userPos.lat, userPos.lng], { icon: iconoUsuario(), zIndexOffset: 1000 }).addTo(map);
+    }
+  }
 
   function haversineMeters(lat1, lng1, lat2, lng2) {
     const R = 6371000;
@@ -299,12 +331,13 @@
     document.getElementById('cerrarBanner').addEventListener('click', () => banner.classList.add('hidden'));
   }
 
-  function pedirUbicacion(centrarSiEsPrimeraVez) {
+function pedirUbicacion(centrarSiEsPrimeraVez) {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         document.getElementById('locBanner').classList.add('hidden');
+        actualizarMarcadorUsuario();
         if (centrarSiEsPrimeraVez && !centradoInicialHecho) {
           map.setView([userPos.lat, userPos.lng], 15);
           centradoInicialHecho = true;
@@ -314,7 +347,7 @@
       (err) => {
         if (err.code === 1) mostrarBannerPermisoDenegado();
       },
-      { enableHighAccuracy: false, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   }
 
@@ -622,19 +655,18 @@
     compartir(location.origin + location.pathname, 'Encontrá baños cerca tuyo con Bañópolis 🚽');
   });
 
-  document.getElementById('locateBtn').addEventListener('click', () => {
+document.getElementById('locateBtn').addEventListener('click', () => {
     if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         document.getElementById('locBanner').classList.add('hidden');
+        actualizarMarcadorUsuario();
         map.setView([userPos.lat, userPos.lng], 16);
-        L.circleMarker([userPos.lat, userPos.lng], {
-          radius: 8, color: '#4285F4', fillColor: '#4285F4', fillOpacity: 0.8, weight: 3
-        }).addTo(map).bindPopup("Estás acá").openPopup();
         actualizarMapa();
       },
-      (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); else alert('No pudimos acceder a tu ubicación.'); }
+      (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); else alert('No pudimos acceder a tu ubicación.'); },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   });
 
