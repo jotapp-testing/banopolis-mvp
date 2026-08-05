@@ -4,149 +4,225 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Bañópolis</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B6B72">
+<link rel="apple-touch-icon" href="android-chrome-192x192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bañópolis">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <style>
+  :root {
+    --color-bg: #EAF1F0;
+    --color-surface: #FFFFFF;
+    --color-ink: #16292B;
+    --color-ink-soft: #4B6467;
+    --color-primary: #1B6B72;
+    --color-primary-dark: #114A4F;
+    --color-primary-soft: #DCEBEA;
+    --color-accent: #E8A33D;
+    --color-accent-dark: #B97C22;
+    --color-accent-soft: #FBEBD2;
+    --color-rose: #C24A56;
+    --color-rose-soft: #FBE4E7;
+    --color-line: #D7E3E2;
+    --font-display: 'Baloo 2', sans-serif;
+    --font-body: 'Work Sans', sans-serif;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, "Segoe UI", Arial, sans-serif; }
+  body { margin: 0; font-family: var(--font-body); background: var(--color-bg); color: var(--color-ink); }
   #map { height: 100vh; width: 100%; }
 
-  /* ---------- Barra superior ---------- */
   #topBar {
     position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
-    background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.2);
-    padding: 8px 10px;
+    background: var(--color-surface);
+    border-bottom: 2px dashed var(--color-line);
+    box-shadow: 0 2px 8px rgba(17,74,79,0.12);
+    padding: 10px 10px 8px;
   }
   #topBarTitleRow { display: flex; justify-content: space-between; align-items: center; }
-  #tituloTxt { font-weight: bold; font-size: 16px; }
+  #tituloTxt { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--color-primary-dark); }
   #topBarBtns { display: flex; gap: 8px; }
   #topBarBtns button, #filtrosBtn {
-    background: #f2f2f2; border: none; border-radius: 50%;
+    background: var(--color-primary-soft); border: none; border-radius: 50%;
     width: 34px; height: 34px; font-size: 16px; cursor: pointer;
+    color: var(--color-primary-dark);
   }
-  #topBarSearchRow { display: flex; gap: 6px; margin-top: 8px; }
+  #topBarSearchRow { display: flex; gap: 6px; margin-top: 9px; }
   #buscador {
-    flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 20px;
-    font-size: 14px; background: #f9f9f9;
+    flex: 1; padding: 9px 12px; border: 1.5px solid var(--color-line); border-radius: 20px;
+    font-size: 14px; background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
   }
-  #buscador:focus { outline: none; border-color: #2d7dd2; background: white; }
+  #buscador:focus { outline: none; border-color: var(--color-primary); background: white; }
 
-  #panelFiltros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  #panelFiltros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
   .filtro-chip {
-    padding: 7px 12px; border-radius: 16px; border: 1.5px solid #dcdcdc;
-    background: #f9f9f9; font-size: 12px; font-weight: 600; color: #555;
-    cursor: pointer;
+    padding: 7px 12px; border-radius: 16px; border: 1.5px solid var(--color-line);
+    background: #F7FAF9; font-size: 12px; font-weight: 600; color: var(--color-ink-soft);
+    cursor: pointer; font-family: var(--font-body);
   }
-  .filtro-chip.chip-active { background: #2d7dd2; border-color: #2d7dd2; color: white; }
+  .filtro-chip.chip-active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
 
-  /* ---------- Botón ubicación estilo Google Maps ---------- */
   #locateBtn {
     position: absolute; bottom: 24px; right: 10px; z-index: 1000;
-    background: white; border: none; border-radius: 50%;
-    width: 44px; height: 44px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    background: var(--color-surface); border: none; border-radius: 50%;
+    width: 46px; height: 46px;
+    box-shadow: 0 2px 8px rgba(17,74,79,0.3);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
   }
-  #locateBtn:active { background: #eee; }
+  #locateBtn:active { background: var(--color-primary-soft); }
   #locateBtn svg { width: 22px; height: 22px; }
 
-  /* ---------- Panel de resultados (lista) ---------- */
   #resultsToggle {
     position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-    z-index: 1000; background: white; border: none; border-radius: 20px;
-    padding: 10px 18px; font-size: 13px; font-weight: bold;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.3); cursor: pointer;
+    z-index: 1000; background: var(--color-primary); border: none; border-radius: 20px;
+    padding: 10px 18px; font-size: 13px; font-weight: 700; color: white;
+    box-shadow: 0 2px 8px rgba(17,74,79,0.35); cursor: pointer;
+    font-family: var(--font-body);
   }
   #resultsPanel {
     position: absolute; bottom: 0; left: 0; right: 0; z-index: 1500;
-    background: white; max-height: 55vh; overflow-y: auto;
-    border-radius: 16px 16px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    background: var(--color-surface); max-height: 55vh; overflow-y: auto;
+    border-radius: 18px 18px 0 0; box-shadow: 0 -2px 12px rgba(17,74,79,0.25);
     padding: 12px;
   }
   .result-item {
-    padding: 10px 6px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer;
+    padding: 10px 6px; border-bottom: 1px dashed var(--color-line); font-size: 14px; cursor: pointer;
   }
-  .result-item:active { background: #f5f5f5; }
+  .result-item:active { background: var(--color-primary-soft); }
+  .result-dist { color: var(--color-primary-dark); font-weight: 700; }
 
-  /* ---------- Modal de bienvenida ---------- */
+  #locBanner {
+    position: absolute; bottom: 80px; left: 10px; right: 10px; z-index: 1400;
+    background: var(--color-accent-soft); border: 1.5px solid var(--color-accent-dark); border-radius: 12px;
+    padding: 10px 12px; font-size: 13px; color: #7A5416;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  #locBanner button {
+    display: block; margin-top: 6px; background: none; border: none;
+    color: var(--color-primary-dark); font-weight: bold; font-size: 12px; padding: 0; cursor: pointer;
+  }
+
   #modalOverlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    position: fixed; inset: 0; background: rgba(17,41,43,0.6);
     z-index: 2000; display: flex; align-items: center; justify-content: center;
     padding: 16px;
   }
   #modalBox {
-    background: white; border-radius: 12px; padding: 20px;
+    background: var(--color-surface); border-radius: 20px; padding: 22px;
     max-width: 380px; width: 100%; max-height: 85vh; overflow-y: auto;
   }
-  #modalBox h2 { margin-top: 0; font-size: 20px; }
-  #modalBox p { font-size: 14px; line-height: 1.5; color: #333; }
-  #modalBox ul { font-size: 14px; padding-left: 20px; color: #333; }
+  #modalBox h2 { margin-top: 0; font-size: 21px; font-family: var(--font-display); color: var(--color-primary-dark); }
+  #modalBox p { font-size: 14px; line-height: 1.5; color: var(--color-ink-soft); }
+  #modalBox ul { font-size: 14px; padding-left: 20px; color: var(--color-ink-soft); }
+  #modalBox li { margin-bottom: 4px; }
   #modalBox button {
-    width: 100%; padding: 12px; margin-top: 10px;
-    background: #2d7dd2; color: white; border: none; border-radius: 8px;
-    font-size: 15px; font-weight: bold; cursor: pointer;
+    width: 100%; padding: 13px; margin-top: 12px;
+    background: var(--color-primary); color: white; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-display);
   }
   .hidden { display: none !important; }
 
-  /* ---------- Formulario (crear baño / dejar reseña) ---------- */
-  .form-popup { font-size: 14px; width: 250px; }
-  .form-popup h3 { margin: 0 0 10px; font-size: 16px; color: #222; }
+  .form-popup { font-size: 14px; width: 250px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+  .form-popup h3 { margin: 0 0 10px; font-size: 16px; color: var(--color-primary-dark); font-family: var(--font-display); }
   .form-popup label {
-    display: block; margin-top: 10px; font-weight: 600;
-    font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
-    color: #666;
+    display: block; margin-top: 10px; font-weight: 700;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--color-ink-soft);
   }
   .form-popup input[type="text"], .form-popup textarea, .form-popup select {
     width: 100%; padding: 9px 10px; margin-top: 4px;
-    font-size: 16px; border: 1px solid #dcdcdc; border-radius: 8px;
-    background: #f9f9f9;
+    font-size: 16px; border: 1.5px solid var(--color-line); border-radius: 10px;
+    background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
   }
   .form-popup input:focus, .form-popup textarea:focus, .form-popup select:focus {
-    outline: none; border-color: #2d7dd2; background: white;
+    outline: none; border-color: var(--color-primary); background: white;
   }
 
   .pill-group { display: flex; gap: 6px; margin-top: 4px; }
   .pill {
     flex: 1; text-align: center; padding: 8px 4px;
-    border: 1.5px solid #dcdcdc; border-radius: 20px;
+    border: 1.5px solid var(--color-line); border-radius: 20px;
     font-size: 13px; cursor: pointer; user-select: none;
-    background: #f9f9f9; font-weight: 600; color: #555;
+    background: #F7FAF9; font-weight: 600; color: var(--color-ink-soft);
   }
-  .pill.active-green { background: #e3f4e6; border-color: #2fa84f; color: #217a3a; }
-  .pill.active-orange { background: #fdecd8; border-color: #e07a1f; color: #b45f14; }
-  .pill.active-blue { background: #e3edfa; border-color: #2d7dd2; color: #1c5ca3; }
+  .pill.active-green { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
+  .pill.active-orange { background: var(--color-accent-soft); border-color: var(--color-accent-dark); color: var(--color-accent-dark); }
+  .pill.active-blue { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
 
   .stars { display: flex; gap: 4px; margin-top: 4px; font-size: 26px; }
-  .star { cursor: pointer; color: #ddd; transition: color 0.1s; }
-  .star.filled { color: #f5b301; }
+  .star { cursor: pointer; color: var(--color-line); transition: color 0.1s; }
+  .star.filled { color: var(--color-accent); }
 
   .form-popup .guardarBtn {
     margin-top: 14px; width: 100%; padding: 11px;
-    background: #2d7dd2; color: white; border: none; border-radius: 8px;
-    font-size: 15px; font-weight: bold; cursor: pointer;
+    background: var(--color-primary); color: white; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-display);
   }
-  .form-popup .guardarBtn:disabled { background: #a9c4e0; }
+  .form-popup .guardarBtn:disabled { background: #A9C7C6; }
 
-  .leaflet-popup-content { margin: 12px 14px; }
-  .leaflet-popup-content-wrapper { border-radius: 12px; }
+  .leaflet-popup-content { margin: 14px 16px; max-height: 65vh; overflow-y: auto; }
+  .leaflet-popup-content-wrapper { border-radius: 14px; }
 
   .popup-info { font-size: 14px; }
-  .popup-info b { font-size: 15px; }
+  .popup-info b { font-size: 15px; font-family: var(--font-display); color: var(--color-ink); }
   .popup-info img {
     width: 100%; max-height: 120px; object-fit: cover;
-    border-radius: 8px; margin-bottom: 6px;
+    border-radius: 10px; margin-bottom: 6px;
   }
-  .estrellas-view { color: #f5b301; }
+  .estrellas-view { color: var(--color-accent); }
+
+  .user-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--color-primary); border: 3px solid white;
+    box-shadow: 0 0 0 2px rgba(27,107,114,0.35);
+    position: relative;
+  }
+  .user-dot::after {
+    content: '';
+    position: absolute; top: -9px; left: -9px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(27,107,114,0.25);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  #loadingOverlay {
+    position: absolute; inset: 0; z-index: 1900;
+    background: rgba(234,241,240,0.9);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #loadingBox {
+    background: white; padding: 16px 24px; border-radius: 14px;
+    font-weight: 700; font-family: var(--font-display); color: var(--color-primary-dark);
+    box-shadow: 0 2px 10px rgba(17,74,79,0.2);
+    text-align: center; line-height: 1.5;
+  }
+
+  .dist-badge {
+    display: inline-block; background: var(--color-primary-soft); color: var(--color-primary-dark);
+    padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700;
+    margin-top: 4px;
+  }
   .warn-badge {
-    background: #fdecd8; color: #b45f14; padding: 6px 8px;
-    border-radius: 6px; font-size: 12px; margin-top: 6px;
+    background: var(--color-rose-soft); color: var(--color-rose); padding: 6px 8px;
+    border-radius: 8px; font-size: 12px; margin-top: 6px; font-weight: 600;
   }
-  .popup-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .popup-actions { display: flex; flex-direction: column; margin-top: 10px; }
   .popup-actions a {
-    font-size: 13px; color: #2d7dd2; text-decoration: none; font-weight: 600;
+    font-size: 13px; color: var(--color-primary-dark); text-decoration: none; font-weight: 700;
+    padding: 6px 0; border-top: 1px dashed var(--color-line);
   }
+  .popup-actions a:first-child { border-top: none; padding-top: 0; }
 
   @media (max-width: 400px) {
     .leaflet-popup-content { width: 220px !important; }
@@ -166,21 +242,27 @@
   </div>
   <div id="topBarSearchRow">
     <input type="text" id="buscador" placeholder="Buscar baño por nombre...">
-    <button id="filtrosBtn" title="Filtros">🔍</button>
+    <button id="filtrosBtn" title="Filtros">⚙️</button>
   </div>
   <div id="panelFiltros" class="hidden">
     <div class="filtro-chip" id="chipGratis">Solo gratis</div>
     <div class="filtro-chip" id="chipAccesible">Solo accesibles</div>
+    <div class="filtro-chip" id="chipCerca">Cerca mío (800m)</div>
     <div class="filtro-chip" id="chipOrden">Mejor puntuados primero</div>
   </div>
 </div>
 
 <div id="map"></div>
+<div id="loadingOverlay">
+  <div id="loadingBox">🚽 Cargando baños...</div>
+</div>
+
+<div id="locBanner" class="hidden"></div>
 
 <button id="locateBtn" title="Ir a mi ubicación">
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="3" fill="#4285F4"/>
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#4285F4" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="12" cy="12" r="3" fill="#1B6B72"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#1B6B72" stroke-width="2" stroke-linecap="round"/>
   </svg>
 </button>
 
@@ -195,8 +277,8 @@
       <li><b>Tocá un pin</b> para ver detalles, dejar tu reseña o reportarlo si ya no existe.</li>
       <li><b>Tocá cualquier punto vacío del mapa</b> para agregar un baño nuevo.</li>
       <li>Usá 🔍 para buscar, ⚙️ para filtrar, y 📍 para ir a tu ubicación.</li>
+      <li>Te vamos a pedir permiso de ubicación para mostrarte los baños más cercanos.</li>
     </ul>
-    <p><i>Es un proyecto en construcción — cuantos más baños carguemos entre todos, más útil se vuelve. ¡Gracias por sumarte!</i></p>
     <button id="cerrarModalBtn">Entendido, vamos</button>
   </div>
 </div>
@@ -222,6 +304,13 @@
   const db = getFirestore(app);
   const banosCol = collection(db, "banos");
 
+  function escaparHTML(texto) {
+    if (!texto) return '';
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
   const categoriaInfo = {
     publico:  { emoji: '🚻', label: 'Baño público' },
     cafe:     { emoji: '☕', label: 'Café/Bar' },
@@ -231,24 +320,102 @@
     otro:     { emoji: '📍', label: 'Otro' }
   };
 
+  const POPUP_OPTS = {
+    maxWidth: 280,
+    autoPanPaddingTopLeft: L.point(16, 130),
+    autoPanPaddingBottomRight: L.point(16, 90)
+  };
+
   let banosCache = [];
   let filtroSoloGratis = false;
   let filtroSoloAccesible = false;
+  let filtroCerca = false;
   let ordenarMejorPuntuados = false;
   let textoBusqueda = '';
 
-  // ---------- Modal de bienvenida ----------
+  let userPos = null;
+  let centradoInicialHecho = false;
+  const RADIO_CERCA_M = 800;
+
+  let userMarker = null;
+  function iconoUsuario() {
+    return L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [18, 18], iconAnchor: [9, 9] });
+  }
+  function actualizarMarcadorUsuario() {
+    if (!userPos) return;
+    if (userMarker) {
+      userMarker.setLatLng([userPos.lat, userPos.lng]);
+    } else {
+      userMarker = L.marker([userPos.lat, userPos.lng], { icon: iconoUsuario(), zIndexOffset: 1000 }).addTo(map);
+    }
+  }
+
+  function haversineMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function formatDistancia(m) {
+    if (m < 1000) return `${Math.round(m)} m`;
+    return `${(m / 1000).toFixed(1)} km`;
+  }
+
+  function distanciaA(b) {
+    if (!userPos) return null;
+    return haversineMeters(userPos.lat, userPos.lng, b.lat, b.lng);
+  }
+
+  function mostrarBannerPermisoDenegado() {
+    const banner = document.getElementById('locBanner');
+    banner.innerHTML = `
+      📍 No tenemos tu ubicación, así que no podemos mostrarte los baños más cercanos.<br>
+      En Android: tocá el candado/ícono junto a la dirección → Permisos → Ubicación → "Permitir".
+      <button id="cerrarBanner">Entendido</button>
+    `;
+    banner.classList.remove('hidden');
+    document.getElementById('cerrarBanner').addEventListener('click', () => banner.classList.add('hidden'));
+  }
+
+  function pedirUbicacion(centrarSiEsPrimeraVez) {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        document.getElementById('locBanner').classList.add('hidden');
+        actualizarMarcadorUsuario();
+        if (centrarSiEsPrimeraVez && !centradoInicialHecho) {
+          map.setView([userPos.lat, userPos.lng], 15);
+          centradoInicialHecho = true;
+        }
+        actualizarMapa();
+      },
+      (err) => {
+        if (err.code === 1) mostrarBannerPermisoDenegado();
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
   const modalOverlay = document.getElementById('modalOverlay');
-  if (localStorage.getItem('banopolis_visto')) modalOverlay.classList.add('hidden');
+  const yaVisto = localStorage.getItem('banopolis_visto');
+  if (yaVisto) {
+    modalOverlay.classList.add('hidden');
+    pedirUbicacion(true);
+  }
   document.getElementById('cerrarModalBtn').addEventListener('click', () => {
     modalOverlay.classList.add('hidden');
     localStorage.setItem('banopolis_visto', 'true');
+    pedirUbicacion(true);
   });
   document.getElementById('infoBtn').addEventListener('click', () => {
     modalOverlay.classList.remove('hidden');
   });
 
-  // ---------- Mapa ----------
   const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 13);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -263,20 +430,29 @@
 
   function iconoBano(b) {
     const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
-    const color = b.reportes >= 3 ? '#999' : (b.gratis ? '#2d7dd2' : '#e07a1f');
+    const color = b.reportes >= 3 ? '#9AA5A5' : (b.gratis ? 'var(--color-primary)' : 'var(--color-accent)');
     return L.divIcon({
-      html: `<div style="background:${color}; width:30px;height:30px;border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex;align-items:center;justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,.4);"><span style="transform:rotate(45deg);font-size:15px;">${cat.emoji}</span></div>`,
-      className: '', iconSize: [30, 30], iconAnchor: [15, 30]
+      html: `
+        <div style="position:relative; width:34px; height:40px;">
+          <div style="position:absolute; top:0; left:1px; width:32px; height:32px; background:${color}; border-radius:9px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(15,40,40,0.35); border:2px solid white;">
+            <span style="font-size:16px;">${cat.emoji}</span>
+          </div>
+          <div style="position:absolute; bottom:0; left:12px; width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:8px solid ${color};"></div>
+        </div>
+      `,
+      className: '', iconSize: [34, 40], iconAnchor: [17, 40]
     });
   }
 
   function compartir(url, texto) {
     if (navigator.share) {
       navigator.share({ title: 'Bañópolis', text: texto, url }).catch(() => {});
-    } else {
+    } else if (navigator.clipboard) {
       navigator.clipboard.writeText(url)
         .then(() => alert('Link copiado al portapapeles'))
         .catch(() => prompt('Copiá este link:', url));
+    } else {
+      prompt('Copiá este link:', url);
     }
   }
 
@@ -287,13 +463,15 @@
     const avgTxt = b.numResenas > 0
       ? `${estrellasTexto(Math.round(b.avgLimpieza))} (${b.avgLimpieza.toFixed(1)}/5 · ${b.numResenas} reseña${b.numResenas > 1 ? 's' : ''})`
       : 'Sin reseñas todavía';
+    const dist = distanciaA(b);
     return `
       <div class="popup-info">
         ${b.fotoUrl ? `<img src="${b.fotoUrl}" onerror="this.style.display='none'">` : ''}
-        <b>${cat.emoji} ${b.nombre}</b><br>
+        <b>${cat.emoji} ${escaparHTML(b.nombre)}</b><br>
         ${b.gratis ? '🟢 Gratis' : '🟠 Pago'} · ${cat.label}<br>
         <span class="estrellas-view">${avgTxt}</span><br>
         ${b.accesible ? '♿ Accesible' : '🚫 No accesible'}
+        ${dist !== null ? `<br><span class="dist-badge">📍 a ${formatDistancia(dist)}</span>` : ''}
         ${b.reportes >= 3 ? `<div class="warn-badge">⚠️ Varios usuarios reportaron que ya no existe o está cerrado</div>` : ''}
         <div class="popup-actions">
           <a href="${gmapsUrl}" target="_blank">📍 Cómo llegar</a>
@@ -364,6 +542,7 @@
       </div>
     `;
     popup.setContent(formHtml);
+    if (popup.update) popup.update();
 
     setTimeout(() => {
       let gratisVal = true, accesibleVal = false, estrellasVal = 3;
@@ -384,10 +563,11 @@
         stars.forEach(x => x.classList.toggle('filled', Number(x.dataset.val) <= estrellasVal));
       }));
 
-      document.getElementById('revGuardarBtn').addEventListener('click', async () => {
+      const revBtn = document.getElementById('revGuardarBtn');
+      revBtn.addEventListener('click', async () => {
+        if (revBtn.disabled) return;
         const comentario = document.getElementById('revComentario').value.trim();
-        const btn = document.getElementById('revGuardarBtn');
-        btn.disabled = true; btn.textContent = 'Enviando...';
+        revBtn.disabled = true; revBtn.textContent = 'Enviando...';
         try {
           await addDoc(collection(db, "banos", id, "resenas"), {
             gratis: gratisVal, limpieza: estrellasVal, accesible: accesibleVal,
@@ -396,10 +576,11 @@
           await refrescarBano(id);
           const b = banosCache.find(x => x.id === id);
           popup.setContent(generarPopupHTML(b));
+          if (popup.update) popup.update();
         } catch (err) {
           console.error(err);
           alert('Error al guardar la reseña. Probá de nuevo.');
-          btn.disabled = false; btn.textContent = 'Enviar reseña';
+          revBtn.disabled = false; revBtn.textContent = 'Enviar reseña';
         }
       });
     }, 100);
@@ -416,8 +597,11 @@
     if (btnReport) btnReport.addEventListener('click', (ev) => { ev.preventDefault(); reportarBano(btnReport.dataset.id); });
   });
 
-  // ---------- Cargar baños ----------
   async function cargarBanos() {
+    if (!navigator.onLine) {
+      document.getElementById('loadingBox').innerHTML = '📡 Sin conexión a internet.<br>Conectate y volvé a abrir la app.';
+      return;
+    }
     try {
       const snapshot = await getDocs(banosCol);
       for (const docSnap of snapshot.docs) {
@@ -439,14 +623,16 @@
         b.numResenas = count;
 
         const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
-        marker.bindPopup(() => generarPopupHTML(b));
+        marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
         b.marker = marker;
         banosCache.push(b);
       }
       actualizarMapa();
       revisarParametroURL();
+      document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
       console.error("Error cargando baños:", err);
+      document.getElementById('loadingBox').innerHTML = '⚠️ No pudimos cargar los baños.<br>Probá de nuevo en un momento.';
     }
   }
 
@@ -461,13 +647,16 @@
     }
   }
 
-  // ---------- Filtros / búsqueda / lista ----------
   function actualizarMapa() {
     markersLayer.clearLayers();
-    const filtrados = banosCache.filter(b => {
+    let filtrados = banosCache.filter(b => {
       if (filtroSoloGratis && !b.gratis) return false;
       if (filtroSoloAccesible && !b.accesible) return false;
       if (textoBusqueda && !b.nombre.toLowerCase().includes(textoBusqueda.toLowerCase())) return false;
+      if (filtroCerca) {
+        const d = distanciaA(b);
+        if (d === null || d > RADIO_CERCA_M) return false;
+      }
       return true;
     });
     filtrados.forEach(b => markersLayer.addLayer(b.marker));
@@ -475,16 +664,20 @@
   }
 
   function actualizarListaResultados(filtrados) {
-    const ordenados = ordenarMejorPuntuados
-      ? [...filtrados].sort((a, b) => b.avgLimpieza - a.avgLimpieza)
-      : filtrados;
+    let ordenados = [...filtrados];
+    if (ordenarMejorPuntuados) {
+      ordenados.sort((a, b) => b.avgLimpieza - a.avgLimpieza);
+    } else if (userPos) {
+      ordenados.sort((a, b) => distanciaA(a) - distanciaA(b));
+    }
     document.getElementById('resultsCount').textContent = ordenados.length;
     const panel = document.getElementById('resultsPanel');
     panel.innerHTML = ordenados.map(b => {
       const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
       const estrellas = b.numResenas > 0 ? estrellasTexto(Math.round(b.avgLimpieza)) : 'Sin reseñas';
+      const d = distanciaA(b);
       return `<div class="result-item" data-id="${b.id}">
-        <b>${cat.emoji} ${b.nombre}</b><br>
+        <b>${cat.emoji} ${escaparHTML(b.nombre)}</b> ${d !== null ? `<span class="result-dist">· ${formatDistancia(d)}</span>` : ''}<br>
         <span class="estrellas-view">${estrellas}</span> · ${b.gratis ? 'Gratis' : 'Pago'}
       </div>`;
     }).join('') || '<div class="result-item">Sin resultados</div>';
@@ -511,6 +704,10 @@
   document.getElementById('chipAccesible').addEventListener('click', function () {
     filtroSoloAccesible = !filtroSoloAccesible; toggleChip(this, filtroSoloAccesible); actualizarMapa();
   });
+  document.getElementById('chipCerca').addEventListener('click', function () {
+    if (!userPos) { pedirUbicacion(false); }
+    filtroCerca = !filtroCerca; toggleChip(this, filtroCerca); actualizarMapa();
+  });
   document.getElementById('chipOrden').addEventListener('click', function () {
     ordenarMejorPuntuados = !ordenarMejorPuntuados; toggleChip(this, ordenarMejorPuntuados); actualizarMapa();
   });
@@ -524,22 +721,21 @@
     compartir(location.origin + location.pathname, 'Encontrá baños cerca tuyo con Bañópolis 🚽');
   });
 
-  // ---------- Botón de ubicación ----------
   document.getElementById('locateBtn').addEventListener('click', () => {
     if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
-        map.setView([latitude, longitude], 16);
-        L.circleMarker([latitude, longitude], {
-          radius: 8, color: '#4285F4', fillColor: '#4285F4', fillOpacity: 0.8, weight: 3
-        }).addTo(map).bindPopup("Estás acá").openPopup();
+        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        document.getElementById('locBanner').classList.add('hidden');
+        actualizarMarcadorUsuario();
+        map.setView([userPos.lat, userPos.lng], 16);
+        actualizarMapa();
       },
-      () => alert('No pudimos acceder a tu ubicación. Revisá los permisos del navegador.')
+      (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); else alert('No pudimos acceder a tu ubicación.'); },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   });
 
-  // ---------- Agregar baño nuevo ----------
   map.on('click', function (e) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
@@ -548,7 +744,7 @@
       <div class="form-popup">
         <h3>➕ Agregar baño</h3>
         <label>Nombre del lugar</label>
-        <input type="text" id="nombre" placeholder="Ej: Café Martínez Palermo">
+        <input type="text" id="nombre" placeholder="Ej: Café Martínez Palermo" maxlength="60">
 
         <label>Categoría</label>
         <select id="categoria">
@@ -585,13 +781,13 @@
         <input type="text" id="fotoUrl" placeholder="https://...">
 
         <label>Comentario</label>
-        <textarea id="comentario" rows="2" placeholder="Opcional"></textarea>
+        <textarea id="comentario" rows="2" placeholder="Opcional" maxlength="300"></textarea>
 
         <button class="guardarBtn" id="guardarBtn">Guardar baño</button>
       </div>
     `;
 
-    L.popup({ maxWidth: 280 }).setLatLng(e.latlng).setContent(formHtml).openOn(map);
+    L.popup(POPUP_OPTS).setLatLng(e.latlng).setContent(formHtml).openOn(map);
 
     setTimeout(() => {
       let gratisVal = true, accesibleVal = false, estrellasVal = 3;
@@ -620,6 +816,7 @@
 
       const btn = document.getElementById('guardarBtn');
       btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
         const nombre = document.getElementById('nombre').value.trim();
         if (!nombre) { alert('Poné al menos un nombre para el lugar.'); return; }
         btn.disabled = true; btn.textContent = 'Guardando...';
@@ -640,7 +837,7 @@
             gratis: gratisVal, accesible: accesibleVal, avgLimpieza: estrellasVal, numResenas: 1
           };
           const marker = L.marker([lat, lng], { icon: iconoBano(b) });
-          marker.bindPopup(() => generarPopupHTML(b));
+          marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
           b.marker = marker;
           banosCache.push(b);
           actualizarMapa();
@@ -655,6 +852,13 @@
   });
 
   cargarBanos();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.error('SW error:', err));
+    });
+  }
 </script>
 
 </body>
