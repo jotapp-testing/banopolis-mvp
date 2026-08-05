@@ -5,184 +5,224 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Bañópolis</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2d7dd2">
+<meta name="theme-color" content="#1B6B72">
 <link rel="apple-touch-icon" href="android-chrome-192x192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Bañópolis">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <style>
+  :root {
+    --color-bg: #EAF1F0;
+    --color-surface: #FFFFFF;
+    --color-ink: #16292B;
+    --color-ink-soft: #4B6467;
+    --color-primary: #1B6B72;
+    --color-primary-dark: #114A4F;
+    --color-primary-soft: #DCEBEA;
+    --color-accent: #E8A33D;
+    --color-accent-dark: #B97C22;
+    --color-accent-soft: #FBEBD2;
+    --color-rose: #C24A56;
+    --color-rose-soft: #FBE4E7;
+    --color-line: #D7E3E2;
+    --font-display: 'Baloo 2', sans-serif;
+    --font-body: 'Work Sans', sans-serif;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, "Segoe UI", Arial, sans-serif; }
+  body { margin: 0; font-family: var(--font-body); background: var(--color-bg); color: var(--color-ink); }
   #map { height: 100vh; width: 100%; }
 
   #topBar {
     position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
-    background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.2);
-    padding: 8px 10px;
+    background: var(--color-surface);
+    border-bottom: 2px dashed var(--color-line);
+    box-shadow: 0 2px 8px rgba(17,74,79,0.12);
+    padding: 10px 10px 8px;
   }
   #topBarTitleRow { display: flex; justify-content: space-between; align-items: center; }
-  #tituloTxt { font-weight: bold; font-size: 16px; }
+  #tituloTxt { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--color-primary-dark); }
   #topBarBtns { display: flex; gap: 8px; }
   #topBarBtns button, #filtrosBtn {
-    background: #f2f2f2; border: none; border-radius: 50%;
+    background: var(--color-primary-soft); border: none; border-radius: 50%;
     width: 34px; height: 34px; font-size: 16px; cursor: pointer;
+    color: var(--color-primary-dark);
   }
-  #topBarSearchRow { display: flex; gap: 6px; margin-top: 8px; }
+  #topBarSearchRow { display: flex; gap: 6px; margin-top: 9px; }
   #buscador {
-    flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 20px;
-    font-size: 14px; background: #f9f9f9;
+    flex: 1; padding: 9px 12px; border: 1.5px solid var(--color-line); border-radius: 20px;
+    font-size: 14px; background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
   }
-  #buscador:focus { outline: none; border-color: #2d7dd2; background: white; }
+  #buscador:focus { outline: none; border-color: var(--color-primary); background: white; }
 
-  #panelFiltros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  #panelFiltros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
   .filtro-chip {
-    padding: 7px 12px; border-radius: 16px; border: 1.5px solid #dcdcdc;
-    background: #f9f9f9; font-size: 12px; font-weight: 600; color: #555;
-    cursor: pointer;
+    padding: 7px 12px; border-radius: 16px; border: 1.5px solid var(--color-line);
+    background: #F7FAF9; font-size: 12px; font-weight: 600; color: var(--color-ink-soft);
+    cursor: pointer; font-family: var(--font-body);
   }
-  .filtro-chip.chip-active { background: #2d7dd2; border-color: #2d7dd2; color: white; }
+  .filtro-chip.chip-active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
 
   #locateBtn {
     position: absolute; bottom: 24px; right: 10px; z-index: 1000;
-    background: white; border: none; border-radius: 50%;
-    width: 44px; height: 44px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    background: var(--color-surface); border: none; border-radius: 50%;
+    width: 46px; height: 46px;
+    box-shadow: 0 2px 8px rgba(17,74,79,0.3);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
   }
-  #locateBtn:active { background: #eee; }
+  #locateBtn:active { background: var(--color-primary-soft); }
   #locateBtn svg { width: 22px; height: 22px; }
 
   #resultsToggle {
     position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-    z-index: 1000; background: white; border: none; border-radius: 20px;
-    padding: 10px 18px; font-size: 13px; font-weight: bold;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.3); cursor: pointer;
+    z-index: 1000; background: var(--color-primary); border: none; border-radius: 20px;
+    padding: 10px 18px; font-size: 13px; font-weight: 700; color: white;
+    box-shadow: 0 2px 8px rgba(17,74,79,0.35); cursor: pointer;
+    font-family: var(--font-body);
   }
   #resultsPanel {
     position: absolute; bottom: 0; left: 0; right: 0; z-index: 1500;
-    background: white; max-height: 55vh; overflow-y: auto;
-    border-radius: 16px 16px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    background: var(--color-surface); max-height: 55vh; overflow-y: auto;
+    border-radius: 18px 18px 0 0; box-shadow: 0 -2px 12px rgba(17,74,79,0.25);
     padding: 12px;
   }
   .result-item {
-    padding: 10px 6px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer;
+    padding: 10px 6px; border-bottom: 1px dashed var(--color-line); font-size: 14px; cursor: pointer;
   }
-  .result-item:active { background: #f5f5f5; }
-  .result-dist { color: #2d7dd2; font-weight: 600; }
+  .result-item:active { background: var(--color-primary-soft); }
+  .result-dist { color: var(--color-primary-dark); font-weight: 700; }
 
-  /* Banner de permiso de ubicación denegado */
   #locBanner {
     position: absolute; bottom: 80px; left: 10px; right: 10px; z-index: 1400;
-    background: #fff3e0; border: 1px solid #e07a1f; border-radius: 10px;
-    padding: 10px 12px; font-size: 13px; color: #7a4a10;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+    background: var(--color-accent-soft); border: 1.5px solid var(--color-accent-dark); border-radius: 12px;
+    padding: 10px 12px; font-size: 13px; color: #7A5416;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
   #locBanner button {
     display: block; margin-top: 6px; background: none; border: none;
-    color: #2d7dd2; font-weight: bold; font-size: 12px; padding: 0; cursor: pointer;
+    color: var(--color-primary-dark); font-weight: bold; font-size: 12px; padding: 0; cursor: pointer;
   }
 
   #modalOverlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    position: fixed; inset: 0; background: rgba(17,41,43,0.6);
     z-index: 2000; display: flex; align-items: center; justify-content: center;
     padding: 16px;
   }
   #modalBox {
-    background: white; border-radius: 12px; padding: 20px;
+    background: var(--color-surface); border-radius: 20px; padding: 22px;
     max-width: 380px; width: 100%; max-height: 85vh; overflow-y: auto;
   }
-  #modalBox h2 { margin-top: 0; font-size: 20px; }
-  #modalBox p { font-size: 14px; line-height: 1.5; color: #333; }
-  #modalBox ul { font-size: 14px; padding-left: 20px; color: #333; }
+  #modalBox h2 { margin-top: 0; font-size: 21px; font-family: var(--font-display); color: var(--color-primary-dark); }
+  #modalBox p { font-size: 14px; line-height: 1.5; color: var(--color-ink-soft); }
+  #modalBox ul { font-size: 14px; padding-left: 20px; color: var(--color-ink-soft); }
+  #modalBox li { margin-bottom: 4px; }
   #modalBox button {
-    width: 100%; padding: 12px; margin-top: 10px;
-    background: #2d7dd2; color: white; border: none; border-radius: 8px;
-    font-size: 15px; font-weight: bold; cursor: pointer;
+    width: 100%; padding: 13px; margin-top: 12px;
+    background: var(--color-primary); color: white; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-display);
   }
   .hidden { display: none !important; }
 
-  .form-popup { font-size: 14px; width: 250px; }
-  .form-popup h3 { margin: 0 0 10px; font-size: 16px; color: #222; }
+  .form-popup { font-size: 14px; width: 250px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+  .form-popup h3 { margin: 0 0 10px; font-size: 16px; color: var(--color-primary-dark); font-family: var(--font-display); }
   .form-popup label {
-    display: block; margin-top: 10px; font-weight: 600;
-    font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
-    color: #666;
+    display: block; margin-top: 10px; font-weight: 700;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--color-ink-soft);
   }
   .form-popup input[type="text"], .form-popup textarea, .form-popup select {
     width: 100%; padding: 9px 10px; margin-top: 4px;
-    font-size: 16px; border: 1px solid #dcdcdc; border-radius: 8px;
-    background: #f9f9f9;
+    font-size: 16px; border: 1.5px solid var(--color-line); border-radius: 10px;
+    background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
   }
   .form-popup input:focus, .form-popup textarea:focus, .form-popup select:focus {
-    outline: none; border-color: #2d7dd2; background: white;
+    outline: none; border-color: var(--color-primary); background: white;
   }
 
   .pill-group { display: flex; gap: 6px; margin-top: 4px; }
   .pill {
     flex: 1; text-align: center; padding: 8px 4px;
-    border: 1.5px solid #dcdcdc; border-radius: 20px;
+    border: 1.5px solid var(--color-line); border-radius: 20px;
     font-size: 13px; cursor: pointer; user-select: none;
-    background: #f9f9f9; font-weight: 600; color: #555;
+    background: #F7FAF9; font-weight: 600; color: var(--color-ink-soft);
   }
-  .pill.active-green { background: #e3f4e6; border-color: #2fa84f; color: #217a3a; }
-  .pill.active-orange { background: #fdecd8; border-color: #e07a1f; color: #b45f14; }
-  .pill.active-blue { background: #e3edfa; border-color: #2d7dd2; color: #1c5ca3; }
+  .pill.active-green { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
+  .pill.active-orange { background: var(--color-accent-soft); border-color: var(--color-accent-dark); color: var(--color-accent-dark); }
+  .pill.active-blue { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
 
   .stars { display: flex; gap: 4px; margin-top: 4px; font-size: 26px; }
-  .star { cursor: pointer; color: #ddd; transition: color 0.1s; }
-  .star.filled { color: #f5b301; }
+  .star { cursor: pointer; color: var(--color-line); transition: color 0.1s; }
+  .star.filled { color: var(--color-accent); }
 
   .form-popup .guardarBtn {
     margin-top: 14px; width: 100%; padding: 11px;
-    background: #2d7dd2; color: white; border: none; border-radius: 8px;
-    font-size: 15px; font-weight: bold; cursor: pointer;
+    background: var(--color-primary); color: white; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-display);
   }
-  .form-popup .guardarBtn:disabled { background: #a9c4e0; }
+  .form-popup .guardarBtn:disabled { background: #A9C7C6; }
 
-  .leaflet-popup-content { margin: 12px 14px; }
-  .leaflet-popup-content-wrapper { border-radius: 12px; }
+  .leaflet-popup-content { margin: 14px 16px; max-height: 65vh; overflow-y: auto; }
+  .leaflet-popup-content-wrapper { border-radius: 14px; }
 
   .popup-info { font-size: 14px; }
-  .popup-info b { font-size: 15px; }
+  .popup-info b { font-size: 15px; font-family: var(--font-display); color: var(--color-ink); }
   .popup-info img {
     width: 100%; max-height: 120px; object-fit: cover;
-    border-radius: 8px; margin-bottom: 6px;
+    border-radius: 10px; margin-bottom: 6px;
   }
-  .estrellas-view { color: #f5b301; }
+  .estrellas-view { color: var(--color-accent); }
+
   .user-dot {
     width: 18px; height: 18px; border-radius: 50%;
-    background: #4285F4; border: 3px solid white;
-    box-shadow: 0 0 0 2px rgba(66,133,244,0.4);
+    background: var(--color-primary); border: 3px solid white;
+    box-shadow: 0 0 0 2px rgba(27,107,114,0.35);
     position: relative;
   }
   .user-dot::after {
     content: '';
     position: absolute; top: -9px; left: -9px;
     width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(66,133,244,0.25);
+    background: rgba(27,107,114,0.25);
     animation: pulse 1.8s infinite;
   }
   @keyframes pulse {
     0% { transform: scale(0.6); opacity: 1; }
     100% { transform: scale(1.6); opacity: 0; }
   }
+
+  #loadingOverlay {
+    position: absolute; inset: 0; z-index: 1900;
+    background: rgba(234,241,240,0.9);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #loadingBox {
+    background: white; padding: 16px 24px; border-radius: 14px;
+    font-weight: 700; font-family: var(--font-display); color: var(--color-primary-dark);
+    box-shadow: 0 2px 10px rgba(17,74,79,0.2);
+    text-align: center; line-height: 1.5;
+  }
+
   .dist-badge {
-    display: inline-block; background: #e3edfa; color: #1c5ca3;
-    padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    display: inline-block; background: var(--color-primary-soft); color: var(--color-primary-dark);
+    padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700;
     margin-top: 4px;
   }
   .warn-badge {
-    background: #fdecd8; color: #b45f14; padding: 6px 8px;
-    border-radius: 6px; font-size: 12px; margin-top: 6px;
+    background: var(--color-rose-soft); color: var(--color-rose); padding: 6px 8px;
+    border-radius: 8px; font-size: 12px; margin-top: 6px; font-weight: 600;
   }
-  .popup-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .popup-actions { display: flex; flex-direction: column; margin-top: 10px; }
   .popup-actions a {
-    font-size: 13px; color: #2d7dd2; text-decoration: none; font-weight: 600;
+    font-size: 13px; color: var(--color-primary-dark); text-decoration: none; font-weight: 700;
+    padding: 6px 0; border-top: 1px dashed var(--color-line);
   }
+  .popup-actions a:first-child { border-top: none; padding-top: 0; }
 
   @media (max-width: 400px) {
     .leaflet-popup-content { width: 220px !important; }
@@ -213,13 +253,16 @@
 </div>
 
 <div id="map"></div>
+<div id="loadingOverlay">
+  <div id="loadingBox">🚽 Cargando baños...</div>
+</div>
 
 <div id="locBanner" class="hidden"></div>
 
 <button id="locateBtn" title="Ir a mi ubicación">
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="3" fill="#4285F4"/>
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#4285F4" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="12" cy="12" r="3" fill="#1B6B72"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#1B6B72" stroke-width="2" stroke-linecap="round"/>
   </svg>
 </button>
 
@@ -235,8 +278,6 @@
       <li><b>Tocá cualquier punto vacío del mapa</b> para agregar un baño nuevo.</li>
       <li>Usá 🔍 para buscar, ⚙️ para filtrar, y 📍 para ir a tu ubicación.</li>
       <li>Te vamos a pedir permiso de ubicación para mostrarte los baños más cercanos.</li>
-    </ul>
-    <p style="font-size:11px;color:#999;">Lorem ipsum dolor sit amet — versión de prueba v2 — si ves este texto gris, tenés la última versión cargada.</p>
     </ul>
     <button id="cerrarModalBtn">Entendido, vamos</button>
   </div>
@@ -263,6 +304,13 @@
   const db = getFirestore(app);
   const banosCol = collection(db, "banos");
 
+  function escaparHTML(texto) {
+    if (!texto) return '';
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
   const categoriaInfo = {
     publico:  { emoji: '🚻', label: 'Baño público' },
     cafe:     { emoji: '☕', label: 'Café/Bar' },
@@ -272,6 +320,12 @@
     otro:     { emoji: '📍', label: 'Otro' }
   };
 
+  const POPUP_OPTS = {
+    maxWidth: 280,
+    autoPanPaddingTopLeft: L.point(16, 130),
+    autoPanPaddingBottomRight: L.point(16, 90)
+  };
+
   let banosCache = [];
   let filtroSoloGratis = false;
   let filtroSoloAccesible = false;
@@ -279,10 +333,9 @@
   let ordenarMejorPuntuados = false;
   let textoBusqueda = '';
 
-  // ---------- Geolocalización ----------
   let userPos = null;
   let centradoInicialHecho = false;
-const RADIO_CERCA_M = 800;
+  const RADIO_CERCA_M = 800;
 
   let userMarker = null;
   function iconoUsuario() {
@@ -319,19 +372,16 @@ const RADIO_CERCA_M = 800;
 
   function mostrarBannerPermisoDenegado() {
     const banner = document.getElementById('locBanner');
-    const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     banner.innerHTML = `
       📍 No tenemos tu ubicación, así que no podemos mostrarte los baños más cercanos.<br>
-      ${esIOS
-        ? 'En iPhone: andá a Ajustes → Bañópolis (o Safari) → Ubicación → "Permitir".'
-        : 'En Android: tocá el candado/ícono junto a la dirección → Permisos → Ubicación → "Permitir".'}
+      En Android: tocá el candado/ícono junto a la dirección → Permisos → Ubicación → "Permitir".
       <button id="cerrarBanner">Entendido</button>
     `;
     banner.classList.remove('hidden');
     document.getElementById('cerrarBanner').addEventListener('click', () => banner.classList.add('hidden'));
   }
 
-function pedirUbicacion(centrarSiEsPrimeraVez) {
+  function pedirUbicacion(centrarSiEsPrimeraVez) {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -351,7 +401,6 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
     );
   }
 
-  // ---------- Modal de bienvenida ----------
   const modalOverlay = document.getElementById('modalOverlay');
   const yaVisto = localStorage.getItem('banopolis_visto');
   if (yaVisto) {
@@ -367,7 +416,6 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
     modalOverlay.classList.remove('hidden');
   });
 
-  // ---------- Mapa ----------
   const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 13);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -382,20 +430,29 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
 
   function iconoBano(b) {
     const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
-    const color = b.reportes >= 3 ? '#999' : (b.gratis ? '#2d7dd2' : '#e07a1f');
+    const color = b.reportes >= 3 ? '#9AA5A5' : (b.gratis ? 'var(--color-primary)' : 'var(--color-accent)');
     return L.divIcon({
-      html: `<div style="background:${color}; width:30px;height:30px;border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex;align-items:center;justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,.4);"><span style="transform:rotate(45deg);font-size:15px;">${cat.emoji}</span></div>`,
-      className: '', iconSize: [30, 30], iconAnchor: [15, 30]
+      html: `
+        <div style="position:relative; width:34px; height:40px;">
+          <div style="position:absolute; top:0; left:1px; width:32px; height:32px; background:${color}; border-radius:9px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(15,40,40,0.35); border:2px solid white;">
+            <span style="font-size:16px;">${cat.emoji}</span>
+          </div>
+          <div style="position:absolute; bottom:0; left:12px; width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:8px solid ${color};"></div>
+        </div>
+      `,
+      className: '', iconSize: [34, 40], iconAnchor: [17, 40]
     });
   }
 
   function compartir(url, texto) {
     if (navigator.share) {
       navigator.share({ title: 'Bañópolis', text: texto, url }).catch(() => {});
-    } else {
+    } else if (navigator.clipboard) {
       navigator.clipboard.writeText(url)
         .then(() => alert('Link copiado al portapapeles'))
         .catch(() => prompt('Copiá este link:', url));
+    } else {
+      prompt('Copiá este link:', url);
     }
   }
 
@@ -410,7 +467,7 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
     return `
       <div class="popup-info">
         ${b.fotoUrl ? `<img src="${b.fotoUrl}" onerror="this.style.display='none'">` : ''}
-        <b>${cat.emoji} ${b.nombre}</b><br>
+        <b>${cat.emoji} ${escaparHTML(b.nombre)}</b><br>
         ${b.gratis ? '🟢 Gratis' : '🟠 Pago'} · ${cat.label}<br>
         <span class="estrellas-view">${avgTxt}</span><br>
         ${b.accesible ? '♿ Accesible' : '🚫 No accesible'}
@@ -485,6 +542,7 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
       </div>
     `;
     popup.setContent(formHtml);
+    if (popup.update) popup.update();
 
     setTimeout(() => {
       let gratisVal = true, accesibleVal = false, estrellasVal = 3;
@@ -505,10 +563,11 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
         stars.forEach(x => x.classList.toggle('filled', Number(x.dataset.val) <= estrellasVal));
       }));
 
-      document.getElementById('revGuardarBtn').addEventListener('click', async () => {
+      const revBtn = document.getElementById('revGuardarBtn');
+      revBtn.addEventListener('click', async () => {
+        if (revBtn.disabled) return;
         const comentario = document.getElementById('revComentario').value.trim();
-        const btn = document.getElementById('revGuardarBtn');
-        btn.disabled = true; btn.textContent = 'Enviando...';
+        revBtn.disabled = true; revBtn.textContent = 'Enviando...';
         try {
           await addDoc(collection(db, "banos", id, "resenas"), {
             gratis: gratisVal, limpieza: estrellasVal, accesible: accesibleVal,
@@ -517,10 +576,11 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
           await refrescarBano(id);
           const b = banosCache.find(x => x.id === id);
           popup.setContent(generarPopupHTML(b));
+          if (popup.update) popup.update();
         } catch (err) {
           console.error(err);
           alert('Error al guardar la reseña. Probá de nuevo.');
-          btn.disabled = false; btn.textContent = 'Enviar reseña';
+          revBtn.disabled = false; revBtn.textContent = 'Enviar reseña';
         }
       });
     }, 100);
@@ -538,6 +598,10 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
   });
 
   async function cargarBanos() {
+    if (!navigator.onLine) {
+      document.getElementById('loadingBox').innerHTML = '📡 Sin conexión a internet.<br>Conectate y volvé a abrir la app.';
+      return;
+    }
     try {
       const snapshot = await getDocs(banosCol);
       for (const docSnap of snapshot.docs) {
@@ -559,14 +623,16 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
         b.numResenas = count;
 
         const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
-        marker.bindPopup(() => generarPopupHTML(b));
+        marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
         b.marker = marker;
         banosCache.push(b);
       }
       actualizarMapa();
       revisarParametroURL();
+      document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
       console.error("Error cargando baños:", err);
+      document.getElementById('loadingBox').innerHTML = '⚠️ No pudimos cargar los baños.<br>Probá de nuevo en un momento.';
     }
   }
 
@@ -611,7 +677,7 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
       const estrellas = b.numResenas > 0 ? estrellasTexto(Math.round(b.avgLimpieza)) : 'Sin reseñas';
       const d = distanciaA(b);
       return `<div class="result-item" data-id="${b.id}">
-        <b>${cat.emoji} ${b.nombre}</b> ${d !== null ? `<span class="result-dist">· ${formatDistancia(d)}</span>` : ''}<br>
+        <b>${cat.emoji} ${escaparHTML(b.nombre)}</b> ${d !== null ? `<span class="result-dist">· ${formatDistancia(d)}</span>` : ''}<br>
         <span class="estrellas-view">${estrellas}</span> · ${b.gratis ? 'Gratis' : 'Pago'}
       </div>`;
     }).join('') || '<div class="result-item">Sin resultados</div>';
@@ -655,7 +721,7 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
     compartir(location.origin + location.pathname, 'Encontrá baños cerca tuyo con Bañópolis 🚽');
   });
 
-document.getElementById('locateBtn').addEventListener('click', () => {
+  document.getElementById('locateBtn').addEventListener('click', () => {
     if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -678,7 +744,7 @@ document.getElementById('locateBtn').addEventListener('click', () => {
       <div class="form-popup">
         <h3>➕ Agregar baño</h3>
         <label>Nombre del lugar</label>
-        <input type="text" id="nombre" placeholder="Ej: Café Martínez Palermo">
+        <input type="text" id="nombre" placeholder="Ej: Café Martínez Palermo" maxlength="60">
 
         <label>Categoría</label>
         <select id="categoria">
@@ -715,13 +781,13 @@ document.getElementById('locateBtn').addEventListener('click', () => {
         <input type="text" id="fotoUrl" placeholder="https://...">
 
         <label>Comentario</label>
-        <textarea id="comentario" rows="2" placeholder="Opcional"></textarea>
+        <textarea id="comentario" rows="2" placeholder="Opcional" maxlength="300"></textarea>
 
         <button class="guardarBtn" id="guardarBtn">Guardar baño</button>
       </div>
     `;
 
-    L.popup({ maxWidth: 280 }).setLatLng(e.latlng).setContent(formHtml).openOn(map);
+    L.popup(POPUP_OPTS).setLatLng(e.latlng).setContent(formHtml).openOn(map);
 
     setTimeout(() => {
       let gratisVal = true, accesibleVal = false, estrellasVal = 3;
@@ -750,6 +816,7 @@ document.getElementById('locateBtn').addEventListener('click', () => {
 
       const btn = document.getElementById('guardarBtn');
       btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
         const nombre = document.getElementById('nombre').value.trim();
         if (!nombre) { alert('Poné al menos un nombre para el lugar.'); return; }
         btn.disabled = true; btn.textContent = 'Guardando...';
@@ -770,7 +837,7 @@ document.getElementById('locateBtn').addEventListener('click', () => {
             gratis: gratisVal, accesible: accesibleVal, avgLimpieza: estrellasVal, numResenas: 1
           };
           const marker = L.marker([lat, lng], { icon: iconoBano(b) });
-          marker.bindPopup(() => generarPopupHTML(b));
+          marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
           b.marker = marker;
           banosCache.push(b);
           actualizarMapa();
