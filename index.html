@@ -39,7 +39,6 @@
   body { font-family: var(--font-body); background: var(--color-bg); color: var(--color-ink); }
   #map { height: 100vh; width: 100%; }
 
-  /* ---------- TOP BAR ---------- */
   #topBar {
     position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
     background: var(--color-surface);
@@ -68,7 +67,6 @@
   }
   #buscador:focus { outline: none; border-color: var(--color-primary); background: white; }
 
-  /* Chips: fila principal, siempre visibles, scrollable horizontal */
   #panelFiltros {
     display: flex; gap: 8px; margin-top: 10px;
     overflow-x: auto; padding-bottom: 2px;
@@ -83,7 +81,6 @@
   }
   .filtro-chip.chip-active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
 
-  /* ---------- BOTTOM NAV ---------- */
   #bottomNav {
     position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
     background: var(--color-surface);
@@ -94,20 +91,24 @@
   }
   .navBtn {
     background: none; border: none; display: flex; flex-direction: column;
-    align-items: center; gap: 2px; color: var(--color-ink-soft);
+    align-items: center; gap: 3px; color: var(--color-ink-soft);
     font-family: var(--font-body); font-size: 11px; font-weight: 600;
     cursor: pointer; padding: 4px 10px;
   }
-  .navBtn .navIcon { font-size: 21px; }
-  #addBtn {
-    background: var(--color-primary); color: white; border-radius: 50%;
-    width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
-    font-size: 28px; box-shadow: 0 3px 10px rgba(17,74,79,0.45); cursor: pointer; border: none;
-    margin-top: -26px;
-  }
-  #addBtn:active { background: var(--color-primary-dark); }
+  .navBtn .navIcon { display: flex; align-items: center; justify-content: center; }
 
-  /* ---------- Banner "modo agregar" ---------- */
+  @keyframes fabPulse {
+    0%, 100% { box-shadow: 0 3px 10px rgba(185,124,34,0.5), 0 0 0 0 rgba(232,163,61,0.55); }
+    50% { box-shadow: 0 3px 10px rgba(185,124,34,0.5), 0 0 0 9px rgba(232,163,61,0); }
+  }
+  #addBtn {
+    background: var(--color-accent); border-radius: 50%;
+    width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none; margin-top: -26px;
+    animation: fabPulse 2.4s ease-in-out infinite;
+  }
+  #addBtn:active { background: var(--color-accent-dark); }
+
   #modoAgregarBanner {
     position: absolute; top: 100px; left: 12px; right: 12px; z-index: 1300;
     background: var(--color-accent-soft); border: 1.5px solid var(--color-accent-dark);
@@ -195,11 +196,30 @@
   }
   .pill.active-green { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
   .pill.active-orange { background: var(--color-accent-soft); border-color: var(--color-accent-dark); color: var(--color-accent-dark); }
-  .pill.active-blue { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
 
-  .stars { display: flex; gap: 4px; margin-top: 4px; font-size: 28px; }
-  .star { cursor: pointer; color: var(--color-line); transition: color 0.1s; }
-  .star.filled { color: var(--color-accent); }
+  /* Switches tipo iOS para campos Sí/No */
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px;
+  }
+  .switch-label { font-size: 13px; font-weight: 600; color: var(--color-ink); }
+  .switch { position: relative; display: inline-block; width: 44px; height: 25px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #D7E3E2; border-radius: 26px; transition: .2s;
+  }
+  .slider::before {
+    content: ""; position: absolute; height: 19px; width: 19px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .switch input:checked + .slider { background: var(--color-primary); }
+  .switch input:checked + .slider::before { transform: translateX(19px); }
+
+  /* Estrellas SVG con puntas redondeadas */
+  .stars { display: flex; gap: 4px; margin-top: 4px; }
+  .star { cursor: pointer; }
+  .star svg { display: block; }
 
   .form-popup .guardarBtn {
     margin-top: 14px; width: 100%; padding: 12px;
@@ -217,11 +237,17 @@
     width: 100%; max-height: 120px; object-fit: cover;
     border-radius: 10px; margin-bottom: 6px;
   }
-  .estrellas-view { color: var(--color-accent); font-weight: 700; }
-  .insumos-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; }
-  .insumo-badge { background: #F1F5F4; border-radius: 8px; padding: 3px 7px; color: var(--color-ink-soft); font-weight: 600; }
-  .insumo-si { color: var(--color-primary-dark); }
-  .insumo-no { color: #999; }
+  .estrellas-view { color: var(--color-accent-dark); font-weight: 700; }
+
+  .insumos-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .insumo-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #F1F5F4; border-radius: 20px; padding: 5px 9px;
+    font-size: 11px; font-weight: 600; color: var(--color-ink-soft);
+  }
+  .insumo-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .insumo-dot.si { background: var(--color-primary); }
+  .insumo-dot.no { background: #C7D2D1; }
 
   .user-dot {
     width: 18px; height: 18px; border-radius: 50%;
@@ -283,6 +309,7 @@
       <span id="brandIcon">🚽</span>
       <div id="brandText">
         <span id="tituloTxt">Bañópolis</span>
+        <span id="subtituloTxt">Buenos Aires</span>
       </div>
     </div>
     <div id="topBarBtns">
@@ -324,10 +351,20 @@
 
 <div id="bottomNav">
   <button class="navBtn" id="locateBtn">
-    <span class="navIcon">📍</span>
-    Cerca mío
+    <span class="navIcon">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none">
+        <circle cx="12" cy="12" r="7" stroke="#4B6467" stroke-width="1.6"/>
+        <circle cx="12" cy="12" r="2.3" fill="#4B6467"/>
+        <path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke="#4B6467" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </span>
+    Mi ubicación
   </button>
-  <button id="addBtn" title="Agregar baño">➕</button>
+  <button id="addBtn" title="Agregar baño">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <path d="M12 5v14M5 12h14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </button>
   <button class="navBtn" id="resultsToggle">
     <span class="navIcon">☰</span>
     Lista
@@ -340,8 +377,8 @@
     <p>Un mapa colaborativo para encontrar baños en Buenos Aires: dónde están, si son gratis o pagos, qué tan limpios están, si son accesibles y si tienen papel, jabón o cambiador.</p>
     <ul>
       <li><b>Tocá un pin</b> para ver detalles o dejar tu reseña sobre ese baño.</li>
-      <li><b>Tocá ➕</b> abajo para agregar un baño nuevo al mapa.</li>
-      <li>Usá los chips para filtrar, y 📍 para ir a tu ubicación.</li>
+      <li><b>Tocá +</b> abajo para agregar un baño nuevo al mapa.</li>
+      <li>Usá los chips para filtrar, y el ícono de mira para ir a tu ubicación.</li>
       <li>Te vamos a pedir permiso de ubicación para mostrarte los baños más cercanos.</li>
     </ul>
     <button id="cerrarModalBtn">Entendido, vamos</button>
@@ -403,6 +440,50 @@
   let centradoInicialHecho = false;
   const RADIO_CERCA_M = 800;
 
+  // ---------- Estrellas SVG (puntas redondeadas) ----------
+  function starSVG(filled) {
+    return `<svg viewBox="0 0 24 24" width="28" height="28" stroke-linejoin="round" stroke-linecap="round"
+      stroke="${filled ? '#B97C22' : '#D7E3E2'}" stroke-width="1.3"
+      fill="${filled ? '#E8A33D' : '#F1F5F4'}">
+      <path d="M12 3.6l2.6 5.5 6.1.8-4.5 4.1 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.1 6.1-.8z"/>
+    </svg>`;
+  }
+  function starsHTML(id, valorInicial) {
+    let html = `<div class="stars" id="${id}">`;
+    for (let i = 1; i <= 5; i++) html += `<span class="star" data-val="${i}">${starSVG(i <= valorInicial)}</span>`;
+    html += `</div>`;
+    return html;
+  }
+  function pintarEstrellas(id, valor) {
+    document.querySelectorAll(`#${id} .star`).forEach(el => {
+      const v = Number(el.dataset.val);
+      el.innerHTML = starSVG(v <= valor);
+    });
+  }
+  function activarEstrellas(id, onChange) {
+    document.querySelectorAll(`#${id} .star`).forEach(s => s.addEventListener('click', () => {
+      const val = Number(s.dataset.val);
+      pintarEstrellas(id, val);
+      onChange(val);
+    }));
+  }
+
+  // ---------- Switch helper ----------
+  function switchHTML(id, emoji, label, checkedInicial) {
+    return `
+      <div class="switch-row">
+        <span class="switch-label">${emoji} ${label}</span>
+        <label class="switch">
+          <input type="checkbox" id="${id}" ${checkedInicial ? 'checked' : ''}>
+          <span class="slider"></span>
+        </label>
+      </div>`;
+  }
+
+  function insumoBadge(icon, label, valor) {
+    return `<span class="insumo-badge"><span class="insumo-dot ${valor ? 'si' : 'no'}"></span>${icon} ${label}</span>`;
+  }
+
   let userMarker = null;
   function iconoUsuario() {
     return L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [18, 18], iconAnchor: [9, 9] });
@@ -425,12 +506,10 @@
               Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
-
   function formatDistancia(m) {
     if (m < 1000) return `${Math.round(m)} m`;
     return `${(m / 1000).toFixed(1)} km`;
   }
-
   function distanciaA(b) {
     if (!userPos) return null;
     return haversineMeters(userPos.lat, userPos.lng, b.lat, b.lng);
@@ -460,9 +539,7 @@
         }
         actualizarMapa();
       },
-      (err) => {
-        if (err.code === 1) mostrarBannerPermisoDenegado();
-      },
+      (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
@@ -481,7 +558,6 @@
   document.getElementById('infoBtn').addEventListener('click', () => {
     modalOverlay.classList.remove('hidden');
   });
-
   document.getElementById('searchToggleBtn').addEventListener('click', () => {
     const row = document.getElementById('searchRow');
     row.classList.toggle('abierto');
@@ -491,8 +567,7 @@
   const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 13);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
   }).addTo(map);
 
   const markersLayer = L.markerClusterGroup();
@@ -524,16 +599,10 @@
     if (navigator.share) {
       navigator.share({ title: 'Bañópolis', text: texto, url }).catch(() => {});
     } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(url)
-        .then(() => alert('Link copiado al portapapeles'))
-        .catch(() => prompt('Copiá este link:', url));
+      navigator.clipboard.writeText(url).then(() => alert('Link copiado al portapapeles')).catch(() => prompt('Copiá este link:', url));
     } else {
       prompt('Copiá este link:', url);
     }
-  }
-
-  function insumoBadge(label, valor) {
-    return `<span class="insumo-badge ${valor ? 'insumo-si' : 'insumo-no'}">${label} ${valor ? '✓' : '✕'}</span>`;
   }
 
   function generarPopupHTML(b) {
@@ -550,9 +619,9 @@
         ${b.accesible ? '♿ Accesible' : '🚫 No accesible'}
         ${dist !== null ? `<br><span class="dist-badge">📍 a ${formatDistancia(dist)}</span>` : ''}
         <div class="insumos-row">
-          ${insumoBadge('🧻 Papel', b.papelHigienico)}
-          ${insumoBadge('🧼 Jabón', b.jabon)}
-          ${insumoBadge('👶 Cambiador', b.cambiador)}
+          ${insumoBadge('🧻', 'Papel', b.papelHigienico)}
+          ${insumoBadge('🧼', 'Jabón', b.jabon)}
+          ${insumoBadge('👶', 'Cambiador', b.cambiador)}
         </div>
         ${b.reportes >= 3 ? `<div class="warn-badge">⚠️ Varios usuarios reportaron que ya no existe o está cerrado</div>` : ''}
         <div class="popup-actions">
@@ -573,11 +642,8 @@
     snap.forEach(d => {
       const r = d.data();
       sum += r.limpieza; count++;
-      b.gratis = r.gratis;
-      b.accesible = r.accesible;
-      b.papelHigienico = !!r.papelHigienico;
-      b.jabon = !!r.jabon;
-      b.cambiador = !!r.cambiador;
+      b.gratis = r.gratis; b.accesible = r.accesible;
+      b.papelHigienico = !!r.papelHigienico; b.jabon = !!r.jabon; b.cambiador = !!r.cambiador;
     });
     b.numResenas = count;
     b.avgLimpieza = count > 0 ? sum / count : 0;
@@ -599,7 +665,8 @@
     }
   }
 
-  function abrirFormularioResena(b, popup) {
+  // ---------- Formulario de reseña (ahora abre popup NUEVO, evita el bug de recorte) ----------
+  function abrirFormularioResena(b, latlng) {
     const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
     const formHtml = `
       <div class="form-popup">
@@ -611,73 +678,35 @@
           <div class="pill" data-val="false">Pago</div>
         </div>
         <label>Limpieza</label>
-        <div class="stars" id="revEstrellas">
-          <span class="star filled" data-val="1">★</span>
-          <span class="star filled" data-val="2">★</span>
-          <span class="star filled" data-val="3">★</span>
-          <span class="star" data-val="4">★</span>
-          <span class="star" data-val="5">★</span>
-        </div>
-        <label>¿Accesible?</label>
-        <div class="pill-group" id="revAccesible">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-        <label>🧻 ¿Tiene papel higiénico?</label>
-        <div class="pill-group" id="revPapel">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-        <label>🧼 ¿Tiene jabón/dispensador?</label>
-        <div class="pill-group" id="revJabon">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-        <label>👶 ¿Tiene cambiador de bebés?</label>
-        <div class="pill-group" id="revCambiador">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
+        ${starsHTML('revEstrellas', 3)}
+        ${switchHTML('revAccesible', '♿', 'Accesible', false)}
+        ${switchHTML('revPapel', '🧻', 'Papel higiénico', false)}
+        ${switchHTML('revJabon', '🧼', 'Jabón/dispensador', false)}
+        ${switchHTML('revCambiador', '👶', 'Cambiador de bebés', false)}
         <label>Comentario</label>
         <textarea id="revComentario" rows="2" placeholder="Opcional" maxlength="300"></textarea>
         <button class="guardarBtn" id="revGuardarBtn">Enviar reseña</button>
       </div>
     `;
-    popup.setContent(formHtml);
-    if (popup.update) popup.update();
+    const popup = L.popup(POPUP_OPTS).setLatLng(latlng).setContent(formHtml).openOn(map);
 
     setTimeout(() => {
-      let gratisVal = true, accesibleVal = false, estrellasVal = 3;
-      let papelVal = false, jabonVal = false, cambiadorVal = false;
-
-      function armarToggle(grupoId, setter) {
-        document.querySelectorAll(`#${grupoId} .pill`).forEach(p => p.addEventListener('click', () => {
-          document.querySelectorAll(`#${grupoId} .pill`).forEach(x => x.classList.remove('active-blue', 'active-green', 'active-orange'));
-          const val = p.dataset.val === 'true';
-          setter(val);
-          p.classList.add(val ? 'active-blue' : (grupoId === 'revGratis' ? 'active-orange' : ''));
-        }));
-      }
+      let gratisVal = true, estrellasVal = 3;
       document.querySelectorAll('#revGratis .pill').forEach(p => p.addEventListener('click', () => {
         document.querySelectorAll('#revGratis .pill').forEach(x => x.classList.remove('active-green', 'active-orange'));
         gratisVal = p.dataset.val === 'true';
         p.classList.add(gratisVal ? 'active-green' : 'active-orange');
       }));
-      armarToggle('revAccesible', v => accesibleVal = v);
-      armarToggle('revPapel', v => papelVal = v);
-      armarToggle('revJabon', v => jabonVal = v);
-      armarToggle('revCambiador', v => cambiadorVal = v);
-
-      const stars = document.querySelectorAll('#revEstrellas .star');
-      stars.forEach(s => s.addEventListener('click', () => {
-        estrellasVal = Number(s.dataset.val);
-        stars.forEach(x => x.classList.toggle('filled', Number(x.dataset.val) <= estrellasVal));
-      }));
+      activarEstrellas('revEstrellas', v => estrellasVal = v);
 
       const revBtn = document.getElementById('revGuardarBtn');
       revBtn.addEventListener('click', async () => {
         if (revBtn.disabled) return;
         const comentario = document.getElementById('revComentario').value.trim();
+        const accesibleVal = document.getElementById('revAccesible').checked;
+        const papelVal = document.getElementById('revPapel').checked;
+        const jabonVal = document.getElementById('revJabon').checked;
+        const cambiadorVal = document.getElementById('revCambiador').checked;
         revBtn.disabled = true; revBtn.textContent = 'Enviando...';
         try {
           await addDoc(collection(db, "banos", b.id, "resenas"), {
@@ -686,8 +715,8 @@
             comentario, fecha: serverTimestamp()
           });
           await refrescarBano(b.id);
-          popup.setContent(generarPopupHTML(b));
-          if (popup.update) popup.update();
+          map.closePopup(popup);
+          L.popup(POPUP_OPTS).setLatLng(latlng).setContent(generarPopupHTML(b)).openOn(map);
           actualizarListaResultados(banosCache);
         } catch (err) {
           console.error(err);
@@ -705,7 +734,9 @@
     if (btnResena) btnResena.addEventListener('click', (ev) => {
       ev.preventDefault();
       const b = banosCache.find(x => x.id === btnResena.dataset.id);
-      if (b) abrirFormularioResena(b, e.popup);
+      const latlng = e.popup.getLatLng();
+      map.closePopup(e.popup);
+      if (b) abrirFormularioResena(b, latlng);
     });
     const btnShare = container.querySelector('.btn-share');
     if (btnShare) btnShare.addEventListener('click', (ev) => { ev.preventDefault(); compartir(btnShare.dataset.url, "Mirá este baño en Bañópolis"); });
@@ -759,10 +790,7 @@
     const id = params.get('bano');
     if (!id) return;
     const b = banosCache.find(x => x.id === id);
-    if (b) {
-      map.setView([b.lat, b.lng], 17);
-      setTimeout(() => b.marker.openPopup(), 300);
-    }
+    if (b) { map.setView([b.lat, b.lng], 17); setTimeout(() => b.marker.openPopup(), 300); }
   }
 
   function actualizarMapa() {
@@ -853,7 +881,6 @@
     );
   });
 
-  // ---------- Modo agregar (explícito, ya no por click directo) ----------
   document.getElementById('addBtn').addEventListener('click', () => {
     modoAgregar = true;
     document.getElementById('modoAgregarBanner').classList.remove('hidden');
@@ -864,7 +891,7 @@
   });
 
   map.on('click', function (e) {
-    if (!modoAgregar) return; // toque normal: solo mover/zoom, no hace nada más
+    if (!modoAgregar) return;
     modoAgregar = false;
     document.getElementById('modoAgregarBanner').classList.add('hidden');
 
@@ -894,37 +921,12 @@
         </div>
 
         <label>Limpieza</label>
-        <div class="stars" id="grupoEstrellas">
-          <span class="star filled" data-val="1">★</span>
-          <span class="star filled" data-val="2">★</span>
-          <span class="star filled" data-val="3">★</span>
-          <span class="star" data-val="4">★</span>
-          <span class="star" data-val="5">★</span>
-        </div>
+        ${starsHTML('grupoEstrellas', 3)}
 
-        <label>¿Accesible?</label>
-        <div class="pill-group" id="grupoAccesible">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-
-        <label>🧻 ¿Tiene papel higiénico?</label>
-        <div class="pill-group" id="grupoPapel">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-
-        <label>🧼 ¿Tiene jabón/dispensador?</label>
-        <div class="pill-group" id="grupoJabon">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-
-        <label>👶 ¿Tiene cambiador de bebés?</label>
-        <div class="pill-group" id="grupoCambiador">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
+        ${switchHTML('grupoAccesible', '♿', 'Accesible', false)}
+        ${switchHTML('grupoPapel', '🧻', 'Papel higiénico', false)}
+        ${switchHTML('grupoJabon', '🧼', 'Jabón/dispensador', false)}
+        ${switchHTML('grupoCambiador', '👶', 'Cambiador de bebés', false)}
 
         <label>Foto (URL, opcional)</label>
         <input type="text" id="fotoUrl" placeholder="https://...">
@@ -939,9 +941,7 @@
     L.popup(POPUP_OPTS).setLatLng(e.latlng).setContent(formHtml).openOn(map);
 
     setTimeout(() => {
-      let gratisVal = true, accesibleVal = false, estrellasVal = 3;
-      let papelVal = false, jabonVal = false, cambiadorVal = false;
-
+      let gratisVal = true, estrellasVal = 3;
       document.querySelectorAll('#grupoGratis .pill').forEach(pill => {
         pill.addEventListener('click', () => {
           document.querySelectorAll('#grupoGratis .pill').forEach(p => p.classList.remove('active-green', 'active-orange'));
@@ -949,28 +949,7 @@
           pill.classList.add(gratisVal ? 'active-green' : 'active-orange');
         });
       });
-      function armarToggle(grupoId, setter) {
-        document.querySelectorAll(`#${grupoId} .pill`).forEach(pill => {
-          pill.addEventListener('click', () => {
-            document.querySelectorAll(`#${grupoId} .pill`).forEach(p => p.classList.remove('active-blue'));
-            const val = pill.dataset.val === "true";
-            setter(val);
-            if (val) pill.classList.add('active-blue');
-          });
-        });
-      }
-      armarToggle('grupoAccesible', v => accesibleVal = v);
-      armarToggle('grupoPapel', v => papelVal = v);
-      armarToggle('grupoJabon', v => jabonVal = v);
-      armarToggle('grupoCambiador', v => cambiadorVal = v);
-
-      const stars = document.querySelectorAll('#grupoEstrellas .star');
-      stars.forEach(star => {
-        star.addEventListener('click', () => {
-          estrellasVal = Number(star.dataset.val);
-          stars.forEach(s => s.classList.toggle('filled', Number(s.dataset.val) <= estrellasVal));
-        });
-      });
+      activarEstrellas('grupoEstrellas', v => estrellasVal = v);
 
       const btn = document.getElementById('guardarBtn');
       btn.addEventListener('click', async () => {
@@ -982,6 +961,10 @@
         const categoria = document.getElementById('categoria').value;
         const fotoUrl = document.getElementById('fotoUrl').value.trim();
         const comentario = document.getElementById('comentario').value.trim();
+        const accesibleVal = document.getElementById('grupoAccesible').checked;
+        const papelVal = document.getElementById('grupoPapel').checked;
+        const jabonVal = document.getElementById('grupoJabon').checked;
+        const cambiadorVal = document.getElementById('grupoCambiador').checked;
 
         try {
           const banoRef = await addDoc(banosCol, { nombre, categoria, lat, lng, fotoUrl, reportes: 0 });
