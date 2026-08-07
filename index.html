@@ -105,7 +105,7 @@
     background: var(--color-accent); border-radius: 50%;
     width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
     cursor: pointer; border: none; margin-top: -26px;
-    animation: fabPulse 2.4s ease-in-out infinite;
+    animation: fabPulse 2s ease-in-out infinite;
   }
   #addBtn:active { background: var(--color-accent-dark); }
 
@@ -166,6 +166,18 @@
     font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-display);
   }
   .hidden { display: none !important; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(10px);
+    z-index: 2600; min-width: 220px; max-width: min(90vw, 360px);
+    padding: 12px 14px; border-radius: 999px; background: rgba(22,41,43,0.94);
+    color: white; font-size: 13px; font-weight: 700; text-align: center;
+    opacity: 0; pointer-events: none; transition: all 180ms ease;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: rgba(27,107,114,0.95); }
+  .toast.error { background: rgba(194,74,86,0.95); }
 
   .form-popup { font-size: 14px; width: 260px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
   .form-popup h3 { margin: 0 0 4px; font-size: 16px; color: var(--color-primary-dark); font-family: var(--font-display); }
@@ -309,6 +321,7 @@
       <span id="brandIcon">🚽</span>
       <div id="brandText">
         <span id="tituloTxt">Bañópolis</span>
+        <span id="subtituloTxt">Mapa colaborativo de baños</span>
       </div>
     </div>
     <div id="topBarBtns">
@@ -323,7 +336,7 @@
   <div id="panelFiltros">
     <div class="filtro-chip" id="chipGratis">🟢 Gratis</div>
     <div class="filtro-chip" id="chipAccesible">♿ Accesible</div>
-    <div class="filtro-chip" id="chipCerca">📍 Cerca (800m)</div>
+    <div class="filtro-chip" id="chipCerca">📍 Cerca de mí (200m)</div>
     <div class="filtro-chip" id="chipOrden">⭐ Mejor puntuados</div>
   </div>
 </div>
@@ -426,6 +439,7 @@
     autoPanPaddingTopLeft: L.point(16, 150),
     autoPanPaddingBottomRight: L.point(16, 120)
   };
+  const FORM_POPUP_OPTS = { ...POPUP_OPTS, closeOnClick: false, autoClose: false };
 
   let banosCache = [];
   let filtroSoloGratis = false;
@@ -437,7 +451,7 @@
 
   let userPos = null;
   let centradoInicialHecho = false;
-  const RADIO_CERCA_M = 800;
+  const RADIO_CERCA_M = 200;
 
   // ---------- Estrellas SVG (puntas redondeadas) ----------
   function starSVG(filled) {
@@ -460,11 +474,69 @@
     });
   }
   function activarEstrellas(id, onChange) {
-    document.querySelectorAll(`#${id} .star`).forEach(s => s.addEventListener('click', () => {
+    document.querySelectorAll(`#${id} .star`).forEach(s => s.addEventListener('click', (ev) => {
+      ev.stopPropagation();
       const val = Number(s.dataset.val);
       pintarEstrellas(id, val);
       onChange(val);
     }));
+  }
+
+  function mostrarToast(mensaje, tipo = 'info') {
+    let toast = document.getElementById('appToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'appToast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = mensaje;
+    toast.className = `toast show ${tipo}`;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.className = 'toast';
+    }, 2400);
+  }
+
+  function prepararPopupInteractivo(container) {
+    if (!container) return;
+    ['click', 'mousedown', 'touchstart', 'pointerdown'].forEach(eventName => {
+      container.addEventListener(eventName, (ev) => ev.stopPropagation());
+    });
+    container.querySelectorAll('input, textarea, select, button, .pill, .star').forEach(el => {
+      ['click', 'mousedown', 'touchstart', 'pointerdown'].forEach(eventName => {
+        el.addEventListener(eventName, (ev) => ev.stopPropagation());
+      });
+    });
+  }
+
+  function abrirPopupFormulario(latlng, formHtml) {
+    const popup = L.popup(FORM_POPUP_OPTS).setLatLng(latlng).setContent(formHtml).openOn(map);
+    requestAnimationFrame(() => {
+      prepararPopupInteractivo(popup.getElement());
+    });
+    return popup;
+  }
+
+  function aplicarResumenResenas(b, resenasSnap) {
+    let sum = 0; let count = 0;
+    let gratisTrue = 0; let accesibleTrue = 0; let papelTrue = 0; let jabonTrue = 0; let cambiadorTrue = 0;
+    resenasSnap.forEach(rd => {
+      const r = rd.data();
+      sum += r.limpieza || 0; count++;
+      if (r.gratis) gratisTrue++;
+      if (r.accesible) accesibleTrue++;
+      if (r.papelHigienico) papelTrue++;
+      if (r.jabon) jabonTrue++;
+      if (r.cambiador) cambiadorTrue++;
+    });
+    b.avgLimpieza = count > 0 ? sum / count : 0;
+    b.numResenas = count;
+    b.gratis = count > 0 ? (gratisTrue / count) >= 0.5 : b.gratis;
+    b.accesible = count > 0 ? (accesibleTrue / count) >= 0.5 : b.accesible;
+    b.papelHigienico = count > 0 ? (papelTrue / count) >= 0.5 : b.papelHigienico;
+    b.jabon = count > 0 ? (jabonTrue / count) >= 0.5 : b.jabon;
+    b.cambiador = count > 0 ? (cambiadorTrue / count) >= 0.5 : b.cambiador;
   }
 
   // ---------- Switch helper ----------
@@ -637,15 +709,7 @@
     const b = banosCache.find(x => x.id === id);
     if (!b) return;
     const snap = await getDocs(collection(db, "banos", id, "resenas"));
-    let sum = 0, count = 0;
-    snap.forEach(d => {
-      const r = d.data();
-      sum += r.limpieza; count++;
-      b.gratis = r.gratis; b.accesible = r.accesible;
-      b.papelHigienico = !!r.papelHigienico; b.jabon = !!r.jabon; b.cambiador = !!r.cambiador;
-    });
-    b.numResenas = count;
-    b.avgLimpieza = count > 0 ? sum / count : 0;
+    aplicarResumenResenas(b, snap);
     b.marker.setIcon(iconoBano(b));
   }
 
@@ -656,11 +720,11 @@
       const b = banosCache.find(x => x.id === id);
       b.reportes = (b.reportes || 0) + 1;
       b.marker.setIcon(iconoBano(b));
-      alert('Gracias, tu reporte fue registrado.');
+      mostrarToast('Gracias, tu reporte fue registrado.', 'success');
       map.closePopup();
     } catch (err) {
       console.error(err);
-      alert('No pudimos registrar el reporte. Probá de nuevo.');
+      mostrarToast('No pudimos registrar el reporte. Probá de nuevo.', 'error');
     }
   }
 
@@ -682,26 +746,29 @@
         ${switchHTML('revPapel', '🧻', 'Papel higiénico', false)}
         ${switchHTML('revJabon', '🧼', 'Jabón/dispensador', false)}
         ${switchHTML('revCambiador', '👶', 'Cambiador de bebés', false)}
-        <label>Comentario</label>
-        <textarea id="revComentario" rows="2" placeholder="Opcional" maxlength="300"></textarea>
+        <label>comentarios</label>
+        <textarea id="revcomentarios" rows="2" placeholder="Opcional" maxlength="300"></textarea>
         <button class="guardarBtn" id="revGuardarBtn">Enviar reseña</button>
       </div>
     `;
-    const popup = L.popup(POPUP_OPTS).setLatLng(latlng).setContent(formHtml).openOn(map);
+    const popup = abrirPopupFormulario(latlng, formHtml);
 
     setTimeout(() => {
       let gratisVal = true, estrellasVal = 3;
-      document.querySelectorAll('#revGratis .pill').forEach(p => p.addEventListener('click', () => {
+      document.querySelectorAll('#revGratis .pill').forEach(p => p.addEventListener('click', (ev) => {
+        ev.stopPropagation();
         document.querySelectorAll('#revGratis .pill').forEach(x => x.classList.remove('active-green', 'active-orange'));
         gratisVal = p.dataset.val === 'true';
         p.classList.add(gratisVal ? 'active-green' : 'active-orange');
       }));
       activarEstrellas('revEstrellas', v => estrellasVal = v);
+      const comentarioInput = document.getElementById('revcomentarios');
+      if (comentarioInput) comentarioInput.focus();
 
       const revBtn = document.getElementById('revGuardarBtn');
       revBtn.addEventListener('click', async () => {
         if (revBtn.disabled) return;
-        const comentario = document.getElementById('revComentario').value.trim();
+        const comentarios = document.getElementById('revcomentarios').value.trim();
         const accesibleVal = document.getElementById('revAccesible').checked;
         const papelVal = document.getElementById('revPapel').checked;
         const jabonVal = document.getElementById('revJabon').checked;
@@ -711,15 +778,16 @@
           await addDoc(collection(db, "banos", b.id, "resenas"), {
             gratis: gratisVal, limpieza: estrellasVal, accesible: accesibleVal,
             papelHigienico: papelVal, jabon: jabonVal, cambiador: cambiadorVal,
-            comentario, fecha: serverTimestamp()
+            comentarios, fecha: serverTimestamp()
           });
           await refrescarBano(b.id);
           map.closePopup(popup);
           L.popup(POPUP_OPTS).setLatLng(latlng).setContent(generarPopupHTML(b)).openOn(map);
           actualizarListaResultados(banosCache);
+          mostrarToast('¡Gracias! Tu reseña ya está visible para otros usuarios.', 'success');
         } catch (err) {
           console.error(err);
-          alert('Error al guardar la reseña. Probá de nuevo.');
+          mostrarToast('Error al guardar la reseña. Probá de nuevo.', 'error');
           revBtn.disabled = false; revBtn.textContent = 'Enviar reseña';
         }
       });
@@ -760,15 +828,7 @@
           avgLimpieza: 0, numResenas: 0
         };
         const resenasSnap = await getDocs(collection(db, "banos", b.id, "resenas"));
-        let sum = 0, count = 0;
-        resenasSnap.forEach(rd => {
-          const r = rd.data();
-          sum += r.limpieza; count++;
-          b.gratis = r.gratis; b.accesible = r.accesible;
-          b.papelHigienico = !!r.papelHigienico; b.jabon = !!r.jabon; b.cambiador = !!r.cambiador;
-        });
-        b.avgLimpieza = count > 0 ? sum / count : 0;
-        b.numResenas = count;
+        aplicarResumenResenas(b, resenasSnap);
 
         const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
         marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
@@ -930,36 +990,38 @@
         <label>Foto (URL, opcional)</label>
         <input type="text" id="fotoUrl" placeholder="https://...">
 
-        <label>Comentario</label>
-        <textarea id="comentario" rows="2" placeholder="Opcional" maxlength="300"></textarea>
+        <label>comentarios</label>
+        <textarea id="comentarios" rows="2" placeholder="Opcional" maxlength="300"></textarea>
 
         <button class="guardarBtn" id="guardarBtn">Guardar baño</button>
       </div>
     `;
 
-    L.popup(POPUP_OPTS).setLatLng(e.latlng).setContent(formHtml).openOn(map);
+    const popup = abrirPopupFormulario(e.latlng, formHtml);
 
     setTimeout(() => {
       let gratisVal = true, estrellasVal = 3;
       document.querySelectorAll('#grupoGratis .pill').forEach(pill => {
-        pill.addEventListener('click', () => {
+        pill.addEventListener('click', (ev) => {
+          ev.stopPropagation();
           document.querySelectorAll('#grupoGratis .pill').forEach(p => p.classList.remove('active-green', 'active-orange'));
           gratisVal = pill.dataset.val === "true";
           pill.classList.add(gratisVal ? 'active-green' : 'active-orange');
         });
       });
       activarEstrellas('grupoEstrellas', v => estrellasVal = v);
+      document.getElementById('nombre').focus();
 
       const btn = document.getElementById('guardarBtn');
       btn.addEventListener('click', async () => {
         if (btn.disabled) return;
         const nombre = document.getElementById('nombre').value.trim();
-        if (!nombre) { alert('Poné al menos un nombre para el lugar.'); return; }
+        if (!nombre) { mostrarToast('Poné al menos un nombre para el lugar.', 'error'); return; }
         btn.disabled = true; btn.textContent = 'Guardando...';
 
         const categoria = document.getElementById('categoria').value;
         const fotoUrl = document.getElementById('fotoUrl').value.trim();
-        const comentario = document.getElementById('comentario').value.trim();
+        const comentarios = document.getElementById('comentarios').value.trim();
         const accesibleVal = document.getElementById('grupoAccesible').checked;
         const papelVal = document.getElementById('grupoPapel').checked;
         const jabonVal = document.getElementById('grupoJabon').checked;
@@ -970,7 +1032,7 @@
           await addDoc(collection(db, "banos", banoRef.id, "resenas"), {
             gratis: gratisVal, limpieza: estrellasVal, accesible: accesibleVal,
             papelHigienico: papelVal, jabon: jabonVal, cambiador: cambiadorVal,
-            comentario, fecha: serverTimestamp()
+            comentarios, fecha: serverTimestamp()
           });
 
           const b = {
@@ -984,10 +1046,12 @@
           b.marker = marker;
           banosCache.push(b);
           actualizarMapa();
-          map.closePopup();
+          map.closePopup(popup);
+          b.marker.openPopup();
+          mostrarToast('¡Baño agregado! Gracias por colaborar con Bañópolis.', 'success');
         } catch (err) {
           console.error(err);
-          alert('Hubo un error guardando el baño. Probá de nuevo.');
+          mostrarToast('Hubo un error guardando el baño. Probá de nuevo.', 'error');
           btn.disabled = false; btn.textContent = 'Guardar baño';
         }
       });
