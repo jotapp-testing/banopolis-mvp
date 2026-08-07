@@ -34,8 +34,9 @@
     --font-display: 'Baloo 2', sans-serif;
     --font-body: 'Work Sans', sans-serif;
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: var(--font-body); background: var(--color-bg); color: var(--color-ink); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overscroll-behavior: none; }
+  body { font-family: var(--font-body); background: var(--color-bg); color: var(--color-ink); }
   #map { height: 100vh; width: 100%; }
 
   #topBar {
@@ -43,63 +44,100 @@
     background: var(--color-surface);
     border-bottom: 2px dashed var(--color-line);
     box-shadow: 0 2px 8px rgba(17,74,79,0.12);
-    padding: 10px 10px 8px;
+    padding: 12px 12px 10px;
   }
   #topBarTitleRow { display: flex; justify-content: space-between; align-items: center; }
-  #tituloTxt { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--color-primary-dark); }
-  #topBarBtns { display: flex; gap: 8px; }
-  #topBarBtns button, #filtrosBtn {
+  #brand { display: flex; align-items: center; gap: 8px; }
+  #brandIcon { font-size: 30px; line-height: 1; }
+  #brandText { display: flex; flex-direction: column; line-height: 1.05; }
+  #tituloTxt { font-family: var(--font-display); font-weight: 800; font-size: 23px; color: var(--color-primary-dark); }
+  #subtituloTxt { font-size: 11px; color: var(--color-ink-soft); font-weight: 600; letter-spacing: 0.3px; }
+  #topBarBtns { display: flex; gap: 6px; }
+  #topBarBtns button {
     background: var(--color-primary-soft); border: none; border-radius: 50%;
-    width: 34px; height: 34px; font-size: 16px; cursor: pointer;
+    width: 38px; height: 38px; font-size: 17px; cursor: pointer;
     color: var(--color-primary-dark);
   }
-  #topBarSearchRow { display: flex; gap: 6px; margin-top: 9px; }
+
+  #searchRow { display: none; margin-top: 10px; }
+  #searchRow.abierto { display: block; }
   #buscador {
-    flex: 1; padding: 9px 12px; border: 1.5px solid var(--color-line); border-radius: 20px;
-    font-size: 14px; background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--color-line); border-radius: 22px;
+    font-size: 15px; background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
   }
   #buscador:focus { outline: none; border-color: var(--color-primary); background: white; }
 
-  #panelFiltros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  #panelFiltros {
+    display: flex; gap: 8px; margin-top: 10px;
+    overflow-x: auto; padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  #panelFiltros::-webkit-scrollbar { display: none; }
   .filtro-chip {
-    padding: 7px 12px; border-radius: 16px; border: 1.5px solid var(--color-line);
-    background: #F7FAF9; font-size: 12px; font-weight: 600; color: var(--color-ink-soft);
-    cursor: pointer; font-family: var(--font-body);
+    flex: 0 0 auto;
+    padding: 9px 14px; border-radius: 18px; border: 1.5px solid var(--color-line);
+    background: #F7FAF9; font-size: 13px; font-weight: 700; color: var(--color-ink-soft);
+    cursor: pointer; font-family: var(--font-body); white-space: nowrap;
   }
   .filtro-chip.chip-active { background: var(--color-primary); border-color: var(--color-primary); color: white; }
 
-  #locateBtn {
-    position: absolute; bottom: 24px; right: 10px; z-index: 1000;
-    background: var(--color-surface); border: none; border-radius: 50%;
-    width: 46px; height: 46px;
-    box-shadow: 0 2px 8px rgba(17,74,79,0.3);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
+  #bottomNav {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
+    background: var(--color-surface);
+    border-top: 2px dashed var(--color-line);
+    box-shadow: 0 -2px 10px rgba(17,74,79,0.15);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
   }
-  #locateBtn:active { background: var(--color-primary-soft); }
-  #locateBtn svg { width: 22px; height: 22px; }
+  .navBtn {
+    background: none; border: none; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; color: var(--color-ink-soft);
+    font-family: var(--font-body); font-size: 11px; font-weight: 600;
+    cursor: pointer; padding: 4px 10px;
+  }
+  .navBtn .navIcon { display: flex; align-items: center; justify-content: center; }
 
-  #resultsToggle {
-    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-    z-index: 1000; background: var(--color-primary); border: none; border-radius: 20px;
-    padding: 10px 18px; font-size: 13px; font-weight: 700; color: white;
-    box-shadow: 0 2px 8px rgba(17,74,79,0.35); cursor: pointer;
-    font-family: var(--font-body);
+  @keyframes fabPulse {
+    0%, 100% { box-shadow: 0 3px 10px rgba(185,124,34,0.5), 0 0 0 0 rgba(232,163,61,0.55); }
+    50% { box-shadow: 0 3px 10px rgba(185,124,34,0.5), 0 0 0 9px rgba(232,163,61,0); }
   }
+  #addBtn {
+    background: var(--color-accent); border-radius: 50%;
+    width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none; margin-top: -26px;
+    animation: fabPulse 2s ease-in-out infinite;
+  }
+  #addBtn:active { background: var(--color-accent-dark); }
+
+  #modoAgregarBanner {
+    position: absolute; top: 100px; left: 12px; right: 12px; z-index: 1300;
+    background: var(--color-accent-soft); border: 1.5px solid var(--color-accent-dark);
+    border-radius: 14px; padding: 12px 14px; text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2); font-size: 14px; font-weight: 600; color: #7A5416;
+  }
+  #modoAgregarBanner button {
+    display: inline-block; margin-top: 8px; background: white; border: 1.5px solid var(--color-accent-dark);
+    color: var(--color-accent-dark); font-weight: 700; font-size: 12px; padding: 6px 14px;
+    border-radius: 14px; cursor: pointer;
+  }
+
   #resultsPanel {
-    position: absolute; bottom: 0; left: 0; right: 0; z-index: 1500;
+    position: absolute; bottom: 74px; left: 0; right: 0; z-index: 1500;
     background: var(--color-surface); max-height: 55vh; overflow-y: auto;
     border-radius: 18px 18px 0 0; box-shadow: 0 -2px 12px rgba(17,74,79,0.25);
-    padding: 12px;
+    padding: 14px;
   }
+  #resultsPanelHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  #resultsPanelHeader b { font-family: var(--font-display); color: var(--color-primary-dark); font-size: 16px; }
+  #resultsPanelHeader span { font-size: 20px; cursor: pointer; color: var(--color-ink-soft); }
   .result-item {
-    padding: 10px 6px; border-bottom: 1px dashed var(--color-line); font-size: 14px; cursor: pointer;
+    padding: 12px 6px; border-bottom: 1px dashed var(--color-line); font-size: 14px; cursor: pointer;
   }
   .result-item:active { background: var(--color-primary-soft); }
   .result-dist { color: var(--color-primary-dark); font-weight: 700; }
 
   #locBanner {
-    position: absolute; bottom: 80px; left: 10px; right: 10px; z-index: 1400;
+    position: absolute; bottom: 90px; left: 10px; right: 10px; z-index: 1400;
     background: var(--color-accent-soft); border: 1.5px solid var(--color-accent-dark); border-radius: 12px;
     padding: 10px 12px; font-size: 13px; color: #7A5416;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -129,15 +167,31 @@
   }
   .hidden { display: none !important; }
 
-  .form-popup { font-size: 14px; width: 250px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
-  .form-popup h3 { margin: 0 0 10px; font-size: 16px; color: var(--color-primary-dark); font-family: var(--font-display); }
+  .toast {
+    position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(10px);
+    z-index: 2600; min-width: 220px; max-width: min(90vw, 360px);
+    padding: 12px 14px; border-radius: 999px; background: rgba(22,41,43,0.94);
+    color: white; font-size: 13px; font-weight: 700; text-align: center;
+    opacity: 0; pointer-events: none; transition: all 180ms ease;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: rgba(27,107,114,0.95); }
+  .toast.error { background: rgba(194,74,86,0.95); }
+
+  .form-popup { font-size: 14px; width: 260px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+  .form-popup h3 { margin: 0 0 4px; font-size: 16px; color: var(--color-primary-dark); font-family: var(--font-display); }
+  .resena-contexto {
+    background: var(--color-primary-soft); border-radius: 10px; padding: 8px 10px;
+    font-size: 12px; color: var(--color-primary-dark); margin-bottom: 8px; font-weight: 600;
+  }
   .form-popup label {
     display: block; margin-top: 10px; font-weight: 700;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
     color: var(--color-ink-soft);
   }
   .form-popup input[type="text"], .form-popup textarea, .form-popup select {
-    width: 100%; padding: 9px 10px; margin-top: 4px;
+    width: 100%; padding: 10px 10px; margin-top: 4px;
     font-size: 16px; border: 1.5px solid var(--color-line); border-radius: 10px;
     background: #F7FAF9; font-family: var(--font-body); color: var(--color-ink);
   }
@@ -147,21 +201,40 @@
 
   .pill-group { display: flex; gap: 6px; margin-top: 4px; }
   .pill {
-    flex: 1; text-align: center; padding: 8px 4px;
+    flex: 1; text-align: center; padding: 9px 4px;
     border: 1.5px solid var(--color-line); border-radius: 20px;
     font-size: 13px; cursor: pointer; user-select: none;
     background: #F7FAF9; font-weight: 600; color: var(--color-ink-soft);
   }
   .pill.active-green { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
   .pill.active-orange { background: var(--color-accent-soft); border-color: var(--color-accent-dark); color: var(--color-accent-dark); }
-  .pill.active-blue { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary-dark); }
 
-  .stars { display: flex; gap: 4px; margin-top: 4px; font-size: 26px; }
-  .star { cursor: pointer; color: var(--color-line); transition: color 0.1s; }
-  .star.filled { color: var(--color-accent); }
+  /* Switches tipo iOS para campos Sí/No */
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px;
+  }
+  .switch-label { font-size: 13px; font-weight: 600; color: var(--color-ink); }
+  .switch { position: relative; display: inline-block; width: 44px; height: 25px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #D7E3E2; border-radius: 26px; transition: .2s;
+  }
+  .slider::before {
+    content: ""; position: absolute; height: 19px; width: 19px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .switch input:checked + .slider { background: var(--color-primary); }
+  .switch input:checked + .slider::before { transform: translateX(19px); }
+
+  /* Estrellas SVG con puntas redondeadas */
+  .stars { display: flex; gap: 4px; margin-top: 4px; }
+  .star { cursor: pointer; }
+  .star svg { display: block; }
 
   .form-popup .guardarBtn {
-    margin-top: 14px; width: 100%; padding: 11px;
+    margin-top: 14px; width: 100%; padding: 12px;
     background: var(--color-primary); color: white; border: none; border-radius: 10px;
     font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-display);
   }
@@ -176,7 +249,17 @@
     width: 100%; max-height: 120px; object-fit: cover;
     border-radius: 10px; margin-bottom: 6px;
   }
-  .estrellas-view { color: var(--color-accent); }
+  .estrellas-view { color: var(--color-accent-dark); font-weight: 700; }
+
+  .insumos-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .insumo-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #F1F5F4; border-radius: 20px; padding: 5px 9px;
+    font-size: 11px; font-weight: 600; color: var(--color-ink-soft);
+  }
+  .insumo-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .insumo-dot.si { background: var(--color-primary); }
+  .insumo-dot.no { background: #C7D2D1; }
 
   .user-dot {
     width: 18px; height: 18px; border-radius: 50%;
@@ -220,13 +303,13 @@
   .popup-actions { display: flex; flex-direction: column; margin-top: 10px; }
   .popup-actions a {
     font-size: 13px; color: var(--color-primary-dark); text-decoration: none; font-weight: 700;
-    padding: 6px 0; border-top: 1px dashed var(--color-line);
+    padding: 8px 0; border-top: 1px dashed var(--color-line);
   }
   .popup-actions a:first-child { border-top: none; padding-top: 0; }
 
   @media (max-width: 400px) {
-    .leaflet-popup-content { width: 220px !important; }
-    .form-popup { width: 220px; }
+    .leaflet-popup-content { width: 230px !important; }
+    .form-popup { width: 230px; }
   }
 </style>
 </head>
@@ -234,21 +317,27 @@
 
 <div id="topBar">
   <div id="topBarTitleRow">
-    <span id="tituloTxt">🚽 Bañópolis</span>
+    <div id="brand">
+      <span id="brandIcon">🚽</span>
+      <div id="brandText">
+        <span id="tituloTxt">Bañópolis</span>
+        <span id="subtituloTxt">Mapa colaborativo de baños</span>
+      </div>
+    </div>
     <div id="topBarBtns">
+      <button id="searchToggleBtn" title="Buscar">🔍</button>
       <button id="shareAppBtn" title="Compartir app">📤</button>
       <button id="infoBtn" title="Cómo funciona">ℹ️</button>
     </div>
   </div>
-  <div id="topBarSearchRow">
+  <div id="searchRow">
     <input type="text" id="buscador" placeholder="Buscar baño por nombre...">
-    <button id="filtrosBtn" title="Filtros">⚙️</button>
   </div>
-  <div id="panelFiltros" class="hidden">
-    <div class="filtro-chip" id="chipGratis">Solo gratis</div>
-    <div class="filtro-chip" id="chipAccesible">Solo accesibles</div>
-    <div class="filtro-chip" id="chipCerca">Cerca mío (800m)</div>
-    <div class="filtro-chip" id="chipOrden">Mejor puntuados primero</div>
+  <div id="panelFiltros">
+    <div class="filtro-chip" id="chipGratis">🟢 Gratis</div>
+    <div class="filtro-chip" id="chipAccesible">♿ Accesible</div>
+    <div class="filtro-chip" id="chipCerca">📍 Cerca de mí (200m)</div>
+    <div class="filtro-chip" id="chipOrden">⭐ Mejor puntuados</div>
   </div>
 </div>
 
@@ -257,26 +346,51 @@
   <div id="loadingBox">🚽 Cargando baños...</div>
 </div>
 
+<div id="modoAgregarBanner" class="hidden">
+  📍 Tocá el mapa donde está el baño
+  <button id="cancelarAgregarBtn">Cancelar</button>
+</div>
+
 <div id="locBanner" class="hidden"></div>
 
-<button id="locateBtn" title="Ir a mi ubicación">
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="3" fill="#1B6B72"/>
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#1B6B72" stroke-width="2" stroke-linecap="round"/>
-  </svg>
-</button>
+<div id="resultsPanel" class="hidden">
+  <div id="resultsPanelHeader">
+    <b>Baños (<span id="resultsCount">0</span>)</b>
+    <span id="resultsCloseBtn">✕</span>
+  </div>
+  <div id="resultsList"></div>
+</div>
 
-<button id="resultsToggle">☰ Ver lista (<span id="resultsCount">0</span>)</button>
-<div id="resultsPanel" class="hidden"></div>
+<div id="bottomNav">
+  <button class="navBtn" id="locateBtn">
+    <span class="navIcon">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none">
+        <circle cx="12" cy="12" r="7" stroke="#4B6467" stroke-width="1.6"/>
+        <circle cx="12" cy="12" r="2.3" fill="#4B6467"/>
+        <path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke="#4B6467" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </span>
+    Mi ubicación
+  </button>
+  <button id="addBtn" title="Agregar baño">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <path d="M12 5v14M5 12h14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button class="navBtn" id="resultsToggle">
+    <span class="navIcon">☰</span>
+    Lista
+  </button>
+</div>
 
 <div id="modalOverlay">
   <div id="modalBox">
     <h2>🚽 Bienvenido a Bañópolis</h2>
-    <p>Un mapa colaborativo para encontrar baños en Buenos Aires: dónde están, si son gratis o pagos, qué tan limpios están y si son accesibles.</p>
+    <p>Un mapa colaborativo para encontrar baños en Buenos Aires: dónde están, si son gratis o pagos, qué tan limpios están, si son accesibles y si tienen papel, jabón o cambiador.</p>
     <ul>
-      <li><b>Tocá un pin</b> para ver detalles, dejar tu reseña o reportarlo si ya no existe.</li>
-      <li><b>Tocá cualquier punto vacío del mapa</b> para agregar un baño nuevo.</li>
-      <li>Usá 🔍 para buscar, ⚙️ para filtrar, y 📍 para ir a tu ubicación.</li>
+      <li><b>Tocá un pin</b> para ver detalles o dejar tu reseña sobre ese baño.</li>
+      <li><b>Tocá +</b> abajo para agregar un baño nuevo al mapa.</li>
+      <li>Usá los chips para filtrar, y el ícono de mira para ir a tu ubicación.</li>
       <li>Te vamos a pedir permiso de ubicación para mostrarte los baños más cercanos.</li>
     </ul>
     <button id="cerrarModalBtn">Entendido, vamos</button>
@@ -322,9 +436,10 @@
 
   const POPUP_OPTS = {
     maxWidth: 280,
-    autoPanPaddingTopLeft: L.point(16, 130),
-    autoPanPaddingBottomRight: L.point(16, 90)
+    autoPanPaddingTopLeft: L.point(16, 150),
+    autoPanPaddingBottomRight: L.point(16, 120)
   };
+  const FORM_POPUP_OPTS = { ...POPUP_OPTS, closeOnClick: false, autoClose: false };
 
   let banosCache = [];
   let filtroSoloGratis = false;
@@ -332,10 +447,113 @@
   let filtroCerca = false;
   let ordenarMejorPuntuados = false;
   let textoBusqueda = '';
+  let modoAgregar = false;
 
   let userPos = null;
   let centradoInicialHecho = false;
-  const RADIO_CERCA_M = 800;
+  const RADIO_CERCA_M = 200;
+
+  // ---------- Estrellas SVG (puntas redondeadas) ----------
+  function starSVG(filled) {
+    return `<svg viewBox="0 0 24 24" width="28" height="28" stroke-linejoin="round" stroke-linecap="round"
+      stroke="${filled ? '#B97C22' : '#D7E3E2'}" stroke-width="1.3"
+      fill="${filled ? '#E8A33D' : '#F1F5F4'}">
+      <path d="M12 3.6l2.6 5.5 6.1.8-4.5 4.1 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.1 6.1-.8z"/>
+    </svg>`;
+  }
+  function starsHTML(id, valorInicial) {
+    let html = `<div class="stars" id="${id}">`;
+    for (let i = 1; i <= 5; i++) html += `<span class="star" data-val="${i}">${starSVG(i <= valorInicial)}</span>`;
+    html += `</div>`;
+    return html;
+  }
+  function pintarEstrellas(id, valor) {
+    document.querySelectorAll(`#${id} .star`).forEach(el => {
+      const v = Number(el.dataset.val);
+      el.innerHTML = starSVG(v <= valor);
+    });
+  }
+  function activarEstrellas(id, onChange) {
+    document.querySelectorAll(`#${id} .star`).forEach(s => s.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const val = Number(s.dataset.val);
+      pintarEstrellas(id, val);
+      onChange(val);
+    }));
+  }
+
+  function mostrarToast(mensaje, tipo = 'info') {
+    let toast = document.getElementById('appToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'appToast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = mensaje;
+    toast.className = `toast show ${tipo}`;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.className = 'toast';
+    }, 2400);
+  }
+
+  function prepararPopupInteractivo(container) {
+    if (!container) return;
+    ['click', 'mousedown', 'touchstart', 'pointerdown'].forEach(eventName => {
+      container.addEventListener(eventName, (ev) => ev.stopPropagation());
+    });
+    container.querySelectorAll('input, textarea, select, button, .pill, .star').forEach(el => {
+      ['click', 'mousedown', 'touchstart', 'pointerdown'].forEach(eventName => {
+        el.addEventListener(eventName, (ev) => ev.stopPropagation());
+      });
+    });
+  }
+
+  function abrirPopupFormulario(latlng, formHtml) {
+    const popup = L.popup(FORM_POPUP_OPTS).setLatLng(latlng).setContent(formHtml).openOn(map);
+    requestAnimationFrame(() => {
+      prepararPopupInteractivo(popup.getElement());
+    });
+    return popup;
+  }
+
+  function aplicarResumenResenas(b, resenasSnap) {
+    let sum = 0; let count = 0;
+    let gratisTrue = 0; let accesibleTrue = 0; let papelTrue = 0; let jabonTrue = 0; let cambiadorTrue = 0;
+    resenasSnap.forEach(rd => {
+      const r = rd.data();
+      sum += r.limpieza || 0; count++;
+      if (r.gratis) gratisTrue++;
+      if (r.accesible) accesibleTrue++;
+      if (r.papelHigienico) papelTrue++;
+      if (r.jabon) jabonTrue++;
+      if (r.cambiador) cambiadorTrue++;
+    });
+    b.avgLimpieza = count > 0 ? sum / count : 0;
+    b.numResenas = count;
+    b.gratis = count > 0 ? (gratisTrue / count) >= 0.5 : b.gratis;
+    b.accesible = count > 0 ? (accesibleTrue / count) >= 0.5 : b.accesible;
+    b.papelHigienico = count > 0 ? (papelTrue / count) >= 0.5 : b.papelHigienico;
+    b.jabon = count > 0 ? (jabonTrue / count) >= 0.5 : b.jabon;
+    b.cambiador = count > 0 ? (cambiadorTrue / count) >= 0.5 : b.cambiador;
+  }
+
+  // ---------- Switch helper ----------
+  function switchHTML(id, emoji, label, checkedInicial) {
+    return `
+      <div class="switch-row">
+        <span class="switch-label">${emoji} ${label}</span>
+        <label class="switch">
+          <input type="checkbox" id="${id}" ${checkedInicial ? 'checked' : ''}>
+          <span class="slider"></span>
+        </label>
+      </div>`;
+  }
+
+  function insumoBadge(icon, label, valor) {
+    return `<span class="insumo-badge"><span class="insumo-dot ${valor ? 'si' : 'no'}"></span>${icon} ${label}</span>`;
+  }
 
   let userMarker = null;
   function iconoUsuario() {
@@ -359,12 +577,10 @@
               Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
-
   function formatDistancia(m) {
     if (m < 1000) return `${Math.round(m)} m`;
     return `${(m / 1000).toFixed(1)} km`;
   }
-
   function distanciaA(b) {
     if (!userPos) return null;
     return haversineMeters(userPos.lat, userPos.lng, b.lat, b.lng);
@@ -394,9 +610,7 @@
         }
         actualizarMapa();
       },
-      (err) => {
-        if (err.code === 1) mostrarBannerPermisoDenegado();
-      },
+      (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
@@ -415,18 +629,26 @@
   document.getElementById('infoBtn').addEventListener('click', () => {
     modalOverlay.classList.remove('hidden');
   });
+  document.getElementById('searchToggleBtn').addEventListener('click', () => {
+    const row = document.getElementById('searchRow');
+    row.classList.toggle('abierto');
+    if (row.classList.contains('abierto')) document.getElementById('buscador').focus();
+  });
 
   const map = L.map('map', { zoomControl: false }).setView([-34.6037, -58.3816], 13);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
   }).addTo(map);
 
   const markersLayer = L.markerClusterGroup();
   map.addLayer(markersLayer);
 
   function estrellasTexto(n) { return "★".repeat(n) + "☆".repeat(5 - n); }
+  function resumenPuntaje(b) {
+    if (b.numResenas === 0) return 'Sin reseñas todavía';
+    return `${estrellasTexto(Math.round(b.avgLimpieza))} ${b.avgLimpieza.toFixed(1)} (${b.numResenas})`;
+  }
 
   function iconoBano(b) {
     const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
@@ -448,9 +670,7 @@
     if (navigator.share) {
       navigator.share({ title: 'Bañópolis', text: texto, url }).catch(() => {});
     } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(url)
-        .then(() => alert('Link copiado al portapapeles'))
-        .catch(() => prompt('Copiá este link:', url));
+      navigator.clipboard.writeText(url).then(() => alert('Link copiado al portapapeles')).catch(() => prompt('Copiá este link:', url));
     } else {
       prompt('Copiá este link:', url);
     }
@@ -460,18 +680,20 @@
     const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
     const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
     const shareUrl = `${location.origin}${location.pathname}?bano=${b.id}`;
-    const avgTxt = b.numResenas > 0
-      ? `${estrellasTexto(Math.round(b.avgLimpieza))} (${b.avgLimpieza.toFixed(1)}/5 · ${b.numResenas} reseña${b.numResenas > 1 ? 's' : ''})`
-      : 'Sin reseñas todavía';
     const dist = distanciaA(b);
     return `
       <div class="popup-info">
         ${b.fotoUrl ? `<img src="${b.fotoUrl}" onerror="this.style.display='none'">` : ''}
         <b>${cat.emoji} ${escaparHTML(b.nombre)}</b><br>
         ${b.gratis ? '🟢 Gratis' : '🟠 Pago'} · ${cat.label}<br>
-        <span class="estrellas-view">${avgTxt}</span><br>
+        <span class="estrellas-view">${resumenPuntaje(b)}</span><br>
         ${b.accesible ? '♿ Accesible' : '🚫 No accesible'}
         ${dist !== null ? `<br><span class="dist-badge">📍 a ${formatDistancia(dist)}</span>` : ''}
+        <div class="insumos-row">
+          ${insumoBadge('🧻', 'Papel', b.papelHigienico)}
+          ${insumoBadge('🧼', 'Jabón', b.jabon)}
+          ${insumoBadge('👶', 'Cambiador', b.cambiador)}
+        </div>
         ${b.reportes >= 3 ? `<div class="warn-badge">⚠️ Varios usuarios reportaron que ya no existe o está cerrado</div>` : ''}
         <div class="popup-actions">
           <a href="${gmapsUrl}" target="_blank">📍 Cómo llegar</a>
@@ -487,15 +709,7 @@
     const b = banosCache.find(x => x.id === id);
     if (!b) return;
     const snap = await getDocs(collection(db, "banos", id, "resenas"));
-    let sum = 0, count = 0;
-    snap.forEach(d => {
-      const r = d.data();
-      sum += r.limpieza; count++;
-      b.gratis = r.gratis;
-      b.accesible = r.accesible;
-    });
-    b.numResenas = count;
-    b.avgLimpieza = count > 0 ? sum / count : 0;
+    aplicarResumenResenas(b, snap);
     b.marker.setIcon(iconoBano(b));
   }
 
@@ -506,80 +720,74 @@
       const b = banosCache.find(x => x.id === id);
       b.reportes = (b.reportes || 0) + 1;
       b.marker.setIcon(iconoBano(b));
-      alert('Gracias, tu reporte fue registrado.');
+      mostrarToast('Gracias, tu reporte fue registrado.', 'success');
       map.closePopup();
     } catch (err) {
       console.error(err);
-      alert('No pudimos registrar el reporte. Probá de nuevo.');
+      mostrarToast('No pudimos registrar el reporte. Probá de nuevo.', 'error');
     }
   }
 
-  function abrirFormularioResena(id, popup) {
+  // ---------- Formulario de reseña (ahora abre popup NUEVO, evita el bug de recorte) ----------
+  function abrirFormularioResena(b, latlng) {
+    const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
     const formHtml = `
       <div class="form-popup">
-        <h3>✍️ Tu reseña</h3>
+        <h3>✍️ Sumá tu reseña</h3>
+        <div class="resena-contexto">${cat.emoji} ${escaparHTML(b.nombre)}<br>Actualmente: ${resumenPuntaje(b)}</div>
         <label>¿Es gratis?</label>
         <div class="pill-group" id="revGratis">
           <div class="pill active-green" data-val="true">Gratis</div>
           <div class="pill" data-val="false">Pago</div>
         </div>
         <label>Limpieza</label>
-        <div class="stars" id="revEstrellas">
-          <span class="star filled" data-val="1">★</span>
-          <span class="star filled" data-val="2">★</span>
-          <span class="star filled" data-val="3">★</span>
-          <span class="star" data-val="4">★</span>
-          <span class="star" data-val="5">★</span>
-        </div>
-        <label>¿Accesible?</label>
-        <div class="pill-group" id="revAccesible">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
-        <label>Comentario</label>
-        <textarea id="revComentario" rows="2" placeholder="Opcional"></textarea>
+        ${starsHTML('revEstrellas', 3)}
+        ${switchHTML('revAccesible', '♿', 'Accesible', false)}
+        ${switchHTML('revPapel', '🧻', 'Papel higiénico', false)}
+        ${switchHTML('revJabon', '🧼', 'Jabón/dispensador', false)}
+        ${switchHTML('revCambiador', '👶', 'Cambiador de bebés', false)}
+        <label>comentarios</label>
+        <textarea id="revcomentarios" rows="2" placeholder="Opcional" maxlength="300"></textarea>
         <button class="guardarBtn" id="revGuardarBtn">Enviar reseña</button>
       </div>
     `;
-    popup.setContent(formHtml);
-    if (popup.update) popup.update();
+    const popup = abrirPopupFormulario(latlng, formHtml);
 
     setTimeout(() => {
-      let gratisVal = true, accesibleVal = false, estrellasVal = 3;
-
-      document.querySelectorAll('#revGratis .pill').forEach(p => p.addEventListener('click', () => {
+      let gratisVal = true, estrellasVal = 3;
+      document.querySelectorAll('#revGratis .pill').forEach(p => p.addEventListener('click', (ev) => {
+        ev.stopPropagation();
         document.querySelectorAll('#revGratis .pill').forEach(x => x.classList.remove('active-green', 'active-orange'));
         gratisVal = p.dataset.val === 'true';
         p.classList.add(gratisVal ? 'active-green' : 'active-orange');
       }));
-      document.querySelectorAll('#revAccesible .pill').forEach(p => p.addEventListener('click', () => {
-        document.querySelectorAll('#revAccesible .pill').forEach(x => x.classList.remove('active-blue'));
-        accesibleVal = p.dataset.val === 'true';
-        if (accesibleVal) p.classList.add('active-blue');
-      }));
-      const stars = document.querySelectorAll('#revEstrellas .star');
-      stars.forEach(s => s.addEventListener('click', () => {
-        estrellasVal = Number(s.dataset.val);
-        stars.forEach(x => x.classList.toggle('filled', Number(x.dataset.val) <= estrellasVal));
-      }));
+      activarEstrellas('revEstrellas', v => estrellasVal = v);
+      const comentarioInput = document.getElementById('revcomentarios');
+      if (comentarioInput) comentarioInput.focus();
 
       const revBtn = document.getElementById('revGuardarBtn');
       revBtn.addEventListener('click', async () => {
         if (revBtn.disabled) return;
-        const comentario = document.getElementById('revComentario').value.trim();
+        const comentarios = document.getElementById('revcomentarios').value.trim();
+        const accesibleVal = document.getElementById('revAccesible').checked;
+        const papelVal = document.getElementById('revPapel').checked;
+        const jabonVal = document.getElementById('revJabon').checked;
+        const cambiadorVal = document.getElementById('revCambiador').checked;
         revBtn.disabled = true; revBtn.textContent = 'Enviando...';
         try {
-          await addDoc(collection(db, "banos", id, "resenas"), {
+          await addDoc(collection(db, "banos", b.id, "resenas"), {
             gratis: gratisVal, limpieza: estrellasVal, accesible: accesibleVal,
-            comentario, fecha: serverTimestamp()
+            papelHigienico: papelVal, jabon: jabonVal, cambiador: cambiadorVal,
+            comentarios, fecha: serverTimestamp()
           });
-          await refrescarBano(id);
-          const b = banosCache.find(x => x.id === id);
-          popup.setContent(generarPopupHTML(b));
-          if (popup.update) popup.update();
+          await refrescarBano(b.id);
+          map.closePopup(popup);
+          L.popup(POPUP_OPTS).setLatLng(latlng).setContent(generarPopupHTML(b)).openOn(map);
+          actualizarListaResultados(banosCache);
+          mostrarToast('¡Gracias! Tu reseña ya está visible para otros usuarios.', 'success');
         } catch (err) {
           console.error(err);
-          alert('Error al guardar la reseña. Probá de nuevo.');
+          mostrarToast('Error al guardar la reseña. Probá de nuevo.', 'error');
           revBtn.disabled = false; revBtn.textContent = 'Enviar reseña';
         }
       });
@@ -590,7 +798,13 @@
     const container = e.popup.getElement();
     if (!container) return;
     const btnResena = container.querySelector('.btn-resena');
-    if (btnResena) btnResena.addEventListener('click', (ev) => { ev.preventDefault(); abrirFormularioResena(btnResena.dataset.id, e.popup); });
+    if (btnResena) btnResena.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const b = banosCache.find(x => x.id === btnResena.dataset.id);
+      const latlng = e.popup.getLatLng();
+      map.closePopup(e.popup);
+      if (b) abrirFormularioResena(b, latlng);
+    });
     const btnShare = container.querySelector('.btn-share');
     if (btnShare) btnShare.addEventListener('click', (ev) => { ev.preventDefault(); compartir(btnShare.dataset.url, "Mirá este baño en Bañópolis"); });
     const btnReport = container.querySelector('.btn-report');
@@ -610,17 +824,11 @@
           id: docSnap.id, nombre: data.nombre, categoria: data.categoria || 'otro',
           lat: data.lat, lng: data.lng, fotoUrl: data.fotoUrl || '',
           reportes: data.reportes || 0,
-          gratis: true, accesible: false, avgLimpieza: 0, numResenas: 0
+          gratis: true, accesible: false, papelHigienico: false, jabon: false, cambiador: false,
+          avgLimpieza: 0, numResenas: 0
         };
         const resenasSnap = await getDocs(collection(db, "banos", b.id, "resenas"));
-        let sum = 0, count = 0;
-        resenasSnap.forEach(rd => {
-          const r = rd.data();
-          sum += r.limpieza; count++;
-          b.gratis = r.gratis; b.accesible = r.accesible;
-        });
-        b.avgLimpieza = count > 0 ? sum / count : 0;
-        b.numResenas = count;
+        aplicarResumenResenas(b, resenasSnap);
 
         const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
         marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
@@ -641,10 +849,7 @@
     const id = params.get('bano');
     if (!id) return;
     const b = banosCache.find(x => x.id === id);
-    if (b) {
-      map.setView([b.lat, b.lng], 17);
-      setTimeout(() => b.marker.openPopup(), 300);
-    }
+    if (b) { map.setView([b.lat, b.lng], 17); setTimeout(() => b.marker.openPopup(), 300); }
   }
 
   function actualizarMapa() {
@@ -671,14 +876,13 @@
       ordenados.sort((a, b) => distanciaA(a) - distanciaA(b));
     }
     document.getElementById('resultsCount').textContent = ordenados.length;
-    const panel = document.getElementById('resultsPanel');
+    const panel = document.getElementById('resultsList');
     panel.innerHTML = ordenados.map(b => {
       const cat = categoriaInfo[b.categoria] || categoriaInfo.otro;
-      const estrellas = b.numResenas > 0 ? estrellasTexto(Math.round(b.avgLimpieza)) : 'Sin reseñas';
       const d = distanciaA(b);
       return `<div class="result-item" data-id="${b.id}">
         <b>${cat.emoji} ${escaparHTML(b.nombre)}</b> ${d !== null ? `<span class="result-dist">· ${formatDistancia(d)}</span>` : ''}<br>
-        <span class="estrellas-view">${estrellas}</span> · ${b.gratis ? 'Gratis' : 'Pago'}
+        <span class="estrellas-view">${resumenPuntaje(b)}</span> · ${b.gratis ? 'Gratis' : 'Pago'}
       </div>`;
     }).join('') || '<div class="result-item">Sin resultados</div>';
 
@@ -688,15 +892,12 @@
         if (b) {
           map.setView([b.lat, b.lng], 17);
           b.marker.openPopup();
-          panel.classList.add('hidden');
+          document.getElementById('resultsPanel').classList.add('hidden');
         }
       });
     });
   }
 
-  document.getElementById('filtrosBtn').addEventListener('click', () => {
-    document.getElementById('panelFiltros').classList.toggle('hidden');
-  });
   function toggleChip(el, activo) { el.classList.toggle('chip-active', activo); }
   document.getElementById('chipGratis').addEventListener('click', function () {
     filtroSoloGratis = !filtroSoloGratis; toggleChip(this, filtroSoloGratis); actualizarMapa();
@@ -717,6 +918,9 @@
   document.getElementById('resultsToggle').addEventListener('click', () => {
     document.getElementById('resultsPanel').classList.toggle('hidden');
   });
+  document.getElementById('resultsCloseBtn').addEventListener('click', () => {
+    document.getElementById('resultsPanel').classList.add('hidden');
+  });
   document.getElementById('shareAppBtn').addEventListener('click', () => {
     compartir(location.origin + location.pathname, 'Encontrá baños cerca tuyo con Bañópolis 🚽');
   });
@@ -736,13 +940,26 @@
     );
   });
 
+  document.getElementById('addBtn').addEventListener('click', () => {
+    modoAgregar = true;
+    document.getElementById('modoAgregarBanner').classList.remove('hidden');
+  });
+  document.getElementById('cancelarAgregarBtn').addEventListener('click', () => {
+    modoAgregar = false;
+    document.getElementById('modoAgregarBanner').classList.add('hidden');
+  });
+
   map.on('click', function (e) {
+    if (!modoAgregar) return;
+    modoAgregar = false;
+    document.getElementById('modoAgregarBanner').classList.add('hidden');
+
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
 
     const formHtml = `
       <div class="form-popup">
-        <h3>➕ Agregar baño</h3>
+        <h3>➕ Nuevo baño</h3>
         <label>Nombre del lugar</label>
         <input type="text" id="nombre" placeholder="Ej: Café Martínez Palermo" maxlength="60">
 
@@ -763,88 +980,78 @@
         </div>
 
         <label>Limpieza</label>
-        <div class="stars" id="grupoEstrellas">
-          <span class="star filled" data-val="1">★</span>
-          <span class="star filled" data-val="2">★</span>
-          <span class="star filled" data-val="3">★</span>
-          <span class="star" data-val="4">★</span>
-          <span class="star" data-val="5">★</span>
-        </div>
+        ${starsHTML('grupoEstrellas', 3)}
 
-        <label>¿Accesible?</label>
-        <div class="pill-group" id="grupoAccesible">
-          <div class="pill" data-val="false">No</div>
-          <div class="pill active-blue" data-val="true">Sí</div>
-        </div>
+        ${switchHTML('grupoAccesible', '♿', 'Accesible', false)}
+        ${switchHTML('grupoPapel', '🧻', 'Papel higiénico', false)}
+        ${switchHTML('grupoJabon', '🧼', 'Jabón/dispensador', false)}
+        ${switchHTML('grupoCambiador', '👶', 'Cambiador de bebés', false)}
 
         <label>Foto (URL, opcional)</label>
         <input type="text" id="fotoUrl" placeholder="https://...">
 
-        <label>Comentario</label>
-        <textarea id="comentario" rows="2" placeholder="Opcional" maxlength="300"></textarea>
+        <label>comentarios</label>
+        <textarea id="comentarios" rows="2" placeholder="Opcional" maxlength="300"></textarea>
 
         <button class="guardarBtn" id="guardarBtn">Guardar baño</button>
       </div>
     `;
 
-    L.popup(POPUP_OPTS).setLatLng(e.latlng).setContent(formHtml).openOn(map);
+    const popup = abrirPopupFormulario(e.latlng, formHtml);
 
     setTimeout(() => {
-      let gratisVal = true, accesibleVal = false, estrellasVal = 3;
-
+      let gratisVal = true, estrellasVal = 3;
       document.querySelectorAll('#grupoGratis .pill').forEach(pill => {
-        pill.addEventListener('click', () => {
+        pill.addEventListener('click', (ev) => {
+          ev.stopPropagation();
           document.querySelectorAll('#grupoGratis .pill').forEach(p => p.classList.remove('active-green', 'active-orange'));
           gratisVal = pill.dataset.val === "true";
           pill.classList.add(gratisVal ? 'active-green' : 'active-orange');
         });
       });
-      document.querySelectorAll('#grupoAccesible .pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-          document.querySelectorAll('#grupoAccesible .pill').forEach(p => p.classList.remove('active-blue'));
-          accesibleVal = pill.dataset.val === "true";
-          if (accesibleVal) pill.classList.add('active-blue');
-        });
-      });
-      const stars = document.querySelectorAll('#grupoEstrellas .star');
-      stars.forEach(star => {
-        star.addEventListener('click', () => {
-          estrellasVal = Number(star.dataset.val);
-          stars.forEach(s => s.classList.toggle('filled', Number(s.dataset.val) <= estrellasVal));
-        });
-      });
+      activarEstrellas('grupoEstrellas', v => estrellasVal = v);
+      document.getElementById('nombre').focus();
 
       const btn = document.getElementById('guardarBtn');
       btn.addEventListener('click', async () => {
         if (btn.disabled) return;
         const nombre = document.getElementById('nombre').value.trim();
-        if (!nombre) { alert('Poné al menos un nombre para el lugar.'); return; }
+        if (!nombre) { mostrarToast('Poné al menos un nombre para el lugar.', 'error'); return; }
         btn.disabled = true; btn.textContent = 'Guardando...';
 
         const categoria = document.getElementById('categoria').value;
         const fotoUrl = document.getElementById('fotoUrl').value.trim();
-        const comentario = document.getElementById('comentario').value.trim();
+        const comentarios = document.getElementById('comentarios').value.trim();
+        const accesibleVal = document.getElementById('grupoAccesible').checked;
+        const papelVal = document.getElementById('grupoPapel').checked;
+        const jabonVal = document.getElementById('grupoJabon').checked;
+        const cambiadorVal = document.getElementById('grupoCambiador').checked;
 
         try {
           const banoRef = await addDoc(banosCol, { nombre, categoria, lat, lng, fotoUrl, reportes: 0 });
           await addDoc(collection(db, "banos", banoRef.id, "resenas"), {
             gratis: gratisVal, limpieza: estrellasVal, accesible: accesibleVal,
-            comentario, fecha: serverTimestamp()
+            papelHigienico: papelVal, jabon: jabonVal, cambiador: cambiadorVal,
+            comentarios, fecha: serverTimestamp()
           });
 
           const b = {
             id: banoRef.id, nombre, categoria, lat, lng, fotoUrl, reportes: 0,
-            gratis: gratisVal, accesible: accesibleVal, avgLimpieza: estrellasVal, numResenas: 1
+            gratis: gratisVal, accesible: accesibleVal,
+            papelHigienico: papelVal, jabon: jabonVal, cambiador: cambiadorVal,
+            avgLimpieza: estrellasVal, numResenas: 1
           };
           const marker = L.marker([lat, lng], { icon: iconoBano(b) });
           marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
           b.marker = marker;
           banosCache.push(b);
           actualizarMapa();
-          map.closePopup();
+          map.closePopup(popup);
+          b.marker.openPopup();
+          mostrarToast('¡Baño agregado! Gracias por colaborar con Bañópolis.', 'success');
         } catch (err) {
           console.error(err);
-          alert('Hubo un error guardando el baño. Probá de nuevo.');
+          mostrarToast('Hubo un error guardando el baño. Probá de nuevo.', 'error');
           btn.disabled = false; btn.textContent = 'Guardar baño';
         }
       });

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'banopolis-v2';
+const CACHE_NAME = 'banopolis-' + Date.now();
 const urlsToCache = [
   './',
   './index.html',
@@ -22,7 +22,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Solo aplicamos cache-first a nuestros propios archivos, no a Firebase ni a los tiles del mapa
   if (event.request.url.startsWith(self.location.origin)) {
     event.respondWith(
       caches.match(event.request).then((cached) => cached || fetch(event.request))
