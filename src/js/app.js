@@ -68,7 +68,8 @@ const categoriaInfo = {
 };
 
 const POPUP_OPTS = {
-    maxWidth: 280,
+    maxWidth: 440,
+    minWidth: 320,
     autoPanPaddingTopLeft: L.point(16, 150),
     autoPanPaddingBottomRight: L.point(16, 120)
 };
@@ -80,10 +81,7 @@ let filtroSoloAccesible = false;
 let filtroCerca = false;
 let ordenarMejorPuntuados = false;
 let textoBusqueda = '';
-let modoSeleccionMapa = false;
 let modoAgregarReview = false;
-let selectedLatLng = null;
-let tempPlaceMarker = null;
 
 let userPos = null;
 let centradoInicialHecho = false;
@@ -480,13 +478,13 @@ async function cargarBanos() {
             const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
             marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
             marker.on('click', (ev) => {
-                if (modoAgregarReview) {
-                    modoAgregarReview = false;
-                    document.getElementById('modoAgregarBanner').classList.add('hidden');
-                    // close any popup that opened and open review form
-                    map.closePopup();
-                    abrirFormularioResena(b, ev.latlng || L.latLng(b.lat, b.lng));
-                }
+                if (!modoAgregarReview) return;
+                modoAgregarReview = false;
+                document.getElementById('modoAgregarBanner').classList.add('hidden');
+                if (ev.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent);
+                marker.closePopup();
+                map.closePopup();
+                requestAnimationFrame(() => abrirFormularioResena(b, ev.latlng || L.latLng(b.lat, b.lng)));
             });
             b.marker = marker;
             banosCache.push(b);
@@ -581,60 +579,14 @@ document.getElementById('locateBtn').addEventListener('click', () => {
 
 // Add button now opens add modal (place search + select on map)
 document.getElementById('addBtn').addEventListener('click', () => {
-    // center map on user's current location before adding
     centrarEnUsuario(16);
     modoAgregarReview = true;
-    document.getElementById('modoAgregarBanner').textContent = '✍️ Tocá el marcador del lugar al que querés agregar una reseña';
     document.getElementById('modoAgregarBanner').classList.remove('hidden');
-    // hide add modal if visible
-    document.getElementById('addModalOverlay').classList.add('hidden');
 });
 
-document.getElementById('closeAddModal').addEventListener('click', () => {
-    document.getElementById('addModalOverlay').classList.add('hidden');
-    document.getElementById('addModalOverlay').setAttribute('aria-hidden', 'true');
-});
-
-// Nominatim search removed: selecting existing markers preferred
-
-document.getElementById('selectOnMapBtn').addEventListener('click', () => {
-    // Ask user to tap the map to pick an existing marker location
-    modoSeleccionMapa = true;
+document.getElementById('cancelarAgregarBtn').addEventListener('click', () => {
     modoAgregarReview = false;
-    document.getElementById('addModalOverlay').classList.add('hidden');
-    document.getElementById('addModalOverlay').setAttribute('aria-hidden', 'true');
-    document.getElementById('modoAgregarBanner').textContent = '📍 Tocá el mapa donde está el lugar';
-    document.getElementById('modoAgregarBanner').classList.remove('hidden');
-});
-
-document.getElementById('savePlaceBtn').addEventListener('click', async () => {
-    // When user clicks 'Seleccionar lugar' in modal, try to find a nearby existing marker and open review form
-    if (!selectedLatLng) { mostrarToast('Primero buscá o tocá el mapa para seleccionar una ubicación.', 'error'); return; }
-    const lat = selectedLatLng.lat, lng = selectedLatLng.lng;
-    const lugar = banosCache.find(b => haversineMeters(b.lat, b.lng, lat, lng) <= 40);
-    if (!lugar) { mostrarToast('No se encontró un lugar cargado cerca de esa ubicación. Tocá el marcador del lugar en el mapa.', 'error'); return; }
-    // open review form for found place
-    abrirFormularioResena(lugar, L.latLng(lugar.lat, lugar.lng));
-    document.getElementById('addModalOverlay').classList.add('hidden');
-});
-
-// Map click now used only for selection when modoSeleccionMapa is active
-map.on('click', function (e) {
-    if (!modoSeleccionMapa) return;
-    modoSeleccionMapa = false;
     document.getElementById('modoAgregarBanner').classList.add('hidden');
-    selectedLatLng = { lat: e.latlng.lat, lng: e.latlng.lng };
-    // try to find nearby existing place; if found, open review form
-    const lugar = banosCache.find(b => haversineMeters(b.lat, b.lng, selectedLatLng.lat, selectedLatLng.lng) <= 40);
-    if (lugar) {
-        abrirFormularioResena(lugar, e.latlng);
-    } else {
-        // show temporary marker to indicate selected spot and re-open add modal for instructions
-        if (tempPlaceMarker) map.removeLayer(tempPlaceMarker);
-        tempPlaceMarker = L.marker([selectedLatLng.lat, selectedLatLng.lng]).addTo(map);
-        document.getElementById('addModalOverlay').classList.remove('hidden');
-        document.getElementById('addModalOverlay').setAttribute('aria-hidden', 'false');
-    }
 });
 
 cargarBanos();

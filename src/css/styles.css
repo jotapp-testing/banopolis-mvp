@@ -233,15 +233,20 @@ body {
 
 #modoAgregarBanner {
     position: absolute;
-    top: 100px;
-    left: 12px;
-    right: 12px;
+    top: 108px;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    transform: translateX(-50%);
     z-index: 1300;
     background: var(--color-accent-soft);
     border: 1.5px solid var(--color-accent-dark);
-    border-radius: 14px;
-    padding: 12px 14px;
-    text-align: center;
+    border-radius: 999px;
+    padding: 8px 10px 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     font-size: 14px;
     font-weight: 600;
@@ -249,8 +254,8 @@ body {
 }
 
 #modoAgregarBanner button {
-    display: inline-block;
-    margin-top: 8px;
+    display: inline-flex;
+    margin: 0;
     background: white;
     border: 1.5px solid var(--color-accent-dark);
     color: var(--color-accent-dark);
@@ -259,6 +264,17 @@ body {
     padding: 6px 14px;
     border-radius: 14px;
     cursor: pointer;
+}
+
+@media (max-width: 420px) {
+    #modoAgregarBanner {
+        font-size: 12px;
+        padding-left: 10px;
+    }
+
+    #modoAgregarBanner button {
+        padding: 5px 9px;
+    }
 }
 
 #resultsPanel {
@@ -435,8 +451,8 @@ body {
 
 .form-popup {
     font-size: 14px;
-    max-width: min(380px, 92vw);
-    max-height: 62vh;
+    max-width: 100%;
+    max-height: none;
     overflow-y: auto;
     padding-right: 2px;
 }
@@ -613,12 +629,13 @@ body {
 
 .leaflet-popup-content {
     margin: 14px 16px;
-    max-height: 65vh;
+    max-height: calc(100dvh - 190px);
     overflow-y: auto;
 }
 
 .leaflet-popup-content-wrapper {
     border-radius: 14px;
+    max-width: min(440px, calc(100vw - 24px));
 }
 
 .popup-info {
@@ -775,52 +792,54 @@ body {
     padding-top: 0;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 600px) {
+    .leaflet-popup {
+        width: calc(100vw - 16px) !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+        width: 100% !important;
+        max-width: none;
+        border-radius: 20px;
+    }
+
     .leaflet-popup-content {
-        width: 230px !important;
+        width: auto !important;
+        max-height: calc(100dvh - 176px);
+        margin: 18px 18px 20px;
+    }
+
+    .form-popup,
+    .popup-info {
+        width: 100%;
+        font-size: 15px;
+    }
+
+    .form-popup h3 {
+        font-size: 21px;
+        margin-bottom: 10px;
+    }
+
+    .form-popup label {
+        margin-top: 14px;
+        font-size: 12px;
+    }
+
+    .form-popup .guardarBtn {
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .popup-info b {
+        font-size: 19px;
+    }
+
+    .popup-actions a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
     }
 }
 
-/* Add modal styles */
-#addModalOverlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 41, 43, 0.55);
-    z-index: 2100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-}
-#addModalBox {
-    background: var(--color-surface);
-    border-radius: 16px;
-    padding: 16px;
-    width: 100%;
-    max-width: 520px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-}
-#addModalBox h2 {
-    margin: 0 0 6px;
-    font-family: var(--font-display);
-    color: var(--color-primary-dark);
-}
-#addModalBox input[type="text"],
-#addModalBox textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1.5px solid var(--color-line);
-}
-#addModalBox button {
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: none;
-    background: var(--color-primary);
-    color: white;
-    cursor: pointer;
-}
 
-/* modoAgregarBanner */
-#modoAgregarBanner { position: fixed; left: 50%; transform: translateX(-50%); bottom: 86px; background: rgba(2,6,23,0.9); color: white; padding: 10px 14px; border-radius: 999px; z-index: 2200; display:flex; gap:8px; align-items:center; }
-#modoAgregarBanner button { background: transparent; border: none; color: #FFD1B0; margin-left:8px; }
