@@ -2,7 +2,11 @@ const CACHE_NAME = 'banopolis-' + Date.now();
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icons/android-chrome-192x192.png',
+  './icons/android-chrome-512x512.png',
+  './src/css/styles.css',
+  './src/js/app.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -22,9 +26,18 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Cache-first strategy for same-origin requests
   if (event.request.url.startsWith(self.location.origin)) {
     event.respondWith(
-      caches.match(event.request).then((cached) => cached || fetch(event.request))
+      caches.match(event.request).then((cached) => cached || fetch(event.request).then(res => {
+        // Optionally put runtime-cached responses into a runtime cache
+        const copy = res.clone();
+        caches.open('runtime-' + CACHE_NAME).then(cache => cache.put(event.request, copy));
+        return res;
+      }).catch(() => {
+        // fallback to cache if network fails
+        return caches.match('./index.html');
+      }))
     );
   }
 });

@@ -3,6 +3,7 @@
   "short_name": "Bañópolis",
   "description": "Mapa colaborativo de baños en Buenos Aires",
   "start_url": "./index.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#114A4F",
   "theme_color": "#114A4F",
@@ -16,6 +17,13 @@
       "src": "./icons/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+    ,
+    {
+      "src": "./icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
