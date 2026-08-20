@@ -291,6 +291,164 @@ body {
     padding: 14px;
 }
 
+#placesPanel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1600;
+    max-height: min(70vh, 620px);
+    overflow-y: auto;
+    padding: 16px 16px calc(18px + env(safe-area-inset-bottom));
+    background: var(--color-surface);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -8px 28px rgba(17, 74, 79, 0.22);
+}
+
+#placesPanelHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+#placesPanelHeader b {
+    display: block;
+    margin-top: 2px;
+    color: var(--color-primary-dark);
+    font-family: var(--font-display);
+    font-size: 21px;
+}
+
+#placesPanelHeader button {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+    font-size: 18px;
+}
+
+.sheet-kicker {
+    display: block;
+    color: var(--color-accent-dark);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+#placesSearchRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+#placesSearchInput {
+    min-width: 0;
+    flex: 1;
+    padding: 12px 14px;
+    border: 1.5px solid var(--color-line);
+    border-radius: 12px;
+    background: #F7FAF9;
+    color: var(--color-ink);
+    font: 15px var(--font-body);
+}
+
+#placesSearchInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: white;
+}
+
+#placesSearchBtn,
+.sheet-secondary-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--color-primary);
+    color: white;
+    font: 700 13px var(--font-body);
+}
+
+.sheet-secondary-btn {
+    width: 100%;
+    margin-top: 12px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+}
+
+.place-result {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 4px;
+    border: 0;
+    border-bottom: 1px solid var(--color-line);
+    background: transparent;
+    color: var(--color-ink);
+    text-align: left;
+    font-family: var(--font-body);
+}
+
+.place-result:active {
+    background: var(--color-primary-soft);
+}
+
+.place-result-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--color-accent-soft);
+    font-size: 19px;
+}
+
+.place-result-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.place-result-copy strong,
+.place-result-copy small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.place-result-copy strong {
+    font-size: 14px;
+}
+
+.place-result-copy small {
+    margin-top: 3px;
+    color: var(--color-ink-soft);
+    font-size: 12px;
+}
+
+.place-result-arrow {
+    color: var(--color-primary-dark);
+    font-size: 25px;
+}
+
+.places-state {
+    padding: 22px 8px;
+    color: var(--color-ink-soft);
+    font-size: 14px;
+    text-align: center;
+}
+
+.new-bath-form .resena-contexto small {
+    font-size: 11px;
+    font-weight: 500;
+}
+
 #resultsPanelHeader {
     display: flex;
     justify-content: space-between;

@@ -81,7 +81,11 @@ let filtroSoloAccesible = false;
 let filtroCerca = false;
 let ordenarMejorPuntuados = false;
 let textoBusqueda = '';
-let modoAgregarReview = false;
+let modoAgregarBano = false;
+let ubicacionAgregar = null;
+let marcadorTemporal = null;
+let nominatimTimer = null;
+let nominatimController = null;
 
 let userPos = null;
 let centradoInicialHecho = false;
@@ -241,21 +245,6 @@ function pedirUbicacion(centrarSiEsPrimeraVez) {
                 map.setView([userPos.lat, userPos.lng], 15);
                 centradoInicialHecho = true;
             }
-            actualizarMapa();
-        },
-        (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
-}
-
-function centrarEnUsuario(zoom = 16) {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            actualizarMarcadorUsuario();
-            map.setView([userPos.lat, userPos.lng], zoom);
-            centradoInicialHecho = true;
             actualizarMapa();
         },
         (err) => { if (err.code === 1) mostrarBannerPermisoDenegado(); },
@@ -477,15 +466,6 @@ async function cargarBanos() {
 
             const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
             marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
-            marker.on('click', (ev) => {
-                if (!modoAgregarReview) return;
-                modoAgregarReview = false;
-                document.getElementById('modoAgregarBanner').classList.add('hidden');
-                if (ev.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent);
-                marker.closePopup();
-                map.closePopup();
-                requestAnimationFrame(() => abrirFormularioResena(b, ev.latlng || L.latLng(b.lat, b.lng)));
-            });
             b.marker = marker;
             banosCache.push(b);
         }
@@ -552,6 +532,245 @@ function actualizarListaResultados(filtrados) {
     });
 }
 
+function cerrarPanelLugares() {
+    document.getElementById('placesPanel').classList.add('hidden');
+    document.getElementById('placesSearchRow').classList.add('hidden');
+    document.getElementById('placesSearchInput').value = '';
+    if (nominatimController) nominatimController.abort();
+    if (nominatimTimer) clearTimeout(nominatimTimer);
+}
+
+function limpiarAltaBano() {
+    modoAgregarBano = false;
+    document.getElementById('modoAgregarBanner').classList.add('hidden');
+    cerrarPanelLugares();
+    if (marcadorTemporal) {
+        map.removeLayer(marcadorTemporal);
+        marcadorTemporal = null;
+    }
+    ubicacionAgregar = null;
+}
+
+function viewboxUsuario() {
+    const delta = 0.0015;
+    return `${userPos.lng - delta},${userPos.lat + delta},${userPos.lng + delta},${userPos.lat - delta}`;
+}
+
+async function consultarNominatim(path, params, signal) {
+    const query = new URLSearchParams({
+        format: 'jsonv2',
+        addressdetails: '1',
+        email: 'banopolis@contacto.com',
+        ...params
+    });
+    const response = await fetch(`https://nominatim.openstreetmap.org/${path}?${query}`, { signal });
+    if (!response.ok) throw new Error(`Nominatim HTTP ${response.status}`);
+    return response.json();
+}
+
+function nombreLugar(resultado) {
+    const address = resultado.address || {};
+    return resultado.name || address.amenity || address.shop || address.tourism || address.leisure || resultado.display_name.split(',')[0];
+}
+
+function direccionLugar(resultado) {
+    const partes = resultado.display_name.split(',').map(parte => parte.trim());
+    return partes.slice(1, 4).join(', ') || resultado.display_name;
+}
+
+function renderizarLugares(resultados, estado = '') {
+    const list = document.getElementById('placesList');
+    if (estado) {
+        list.innerHTML = `<div class="places-state">${estado}</div>`;
+        return;
+    }
+    if (!resultados.length) {
+        list.innerHTML = '<div class="places-state">No encontramos lugares cerca. Probá buscar por nombre.</div>';
+        return;
+    }
+    list.innerHTML = resultados.map((resultado, index) => `
+        <button class="place-result" type="button" data-place-index="${index}">
+            <span class="place-result-icon">${resultado.type === 'cafe' ? '☕' : '📍'}</span>
+            <span class="place-result-copy">
+                <strong>${escaparHTML(nombreLugar(resultado))}</strong>
+                <small>${escaparHTML(direccionLugar(resultado))}</small>
+            </span>
+            <span class="place-result-arrow">›</span>
+        </button>
+    `).join('');
+    list.querySelectorAll('.place-result').forEach(button => {
+        button.addEventListener('click', () => seleccionarLugar(resultados[Number(button.dataset.placeIndex)]));
+    });
+}
+
+async function buscarLugaresCercanos() {
+    if (!userPos) return;
+    const list = document.getElementById('placesList');
+    renderizarLugares([], 'Buscando lugares cerca tuyo...');
+    if (nominatimController) nominatimController.abort();
+    nominatimController = new AbortController();
+    try {
+        await consultarNominatim('reverse', {
+            lat: userPos.lat,
+            lon: userPos.lng,
+            zoom: 18
+        }, nominatimController.signal);
+        const resultados = await consultarNominatim('search', {
+            q: 'Buenos Aires',
+            viewbox: viewboxUsuario(),
+            bounded: '1',
+            limit: '12'
+        }, nominatimController.signal);
+        renderizarLugares(resultados);
+    } catch (error) {
+        if (error.name !== 'AbortError') {
+            console.error('Error buscando lugares:', error);
+            renderizarLugares([], 'No pudimos cargar lugares. Probá buscar por nombre.');
+        }
+    }
+}
+
+function abrirPanelLugares() {
+    document.getElementById('placesPanel').classList.remove('hidden');
+    document.getElementById('placesSearchRow').classList.add('hidden');
+    document.getElementById('placesManualBtn').classList.remove('hidden');
+    buscarLugaresCercanos();
+}
+
+function buscarLugaresPorNombre(query) {
+    const texto = query.trim();
+    if (!texto || !userPos) return;
+    if (nominatimController) nominatimController.abort();
+    nominatimController = new AbortController();
+    renderizarLugares([], 'Buscando...');
+    consultarNominatim('search', {
+        q: `${texto} Buenos Aires`,
+        viewbox: viewboxUsuario(),
+        bounded: '1',
+        limit: '12'
+    }, nominatimController.signal)
+        .then(resultados => renderizarLugares(resultados))
+        .catch(error => {
+            if (error.name !== 'AbortError') renderizarLugares([], 'No pudimos hacer la búsqueda.');
+        });
+}
+
+function seleccionarLugar(resultado) {
+    const lat = Number(resultado.lat);
+    const lng = Number(resultado.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    ubicacionAgregar = { lat, lng, nombre: nombreLugar(resultado) };
+    modoAgregarBano = false;
+    document.getElementById('modoAgregarBanner').classList.add('hidden');
+    cerrarPanelLugares();
+    map.setView([lat, lng], 18);
+    if (marcadorTemporal) map.removeLayer(marcadorTemporal);
+    marcadorTemporal = L.marker([lat, lng], { zIndexOffset: 900 }).addTo(map);
+    abrirFormularioNuevoBano(ubicacionAgregar);
+}
+
+function abrirFormularioNuevoBano(ubicacion) {
+    const formHtml = `
+        <div class="form-popup new-bath-form">
+            <h3>➕ Agregar baño</h3>
+            <div class="resena-contexto">${escaparHTML(ubicacion.nombre)}<br><small>Ubicación seleccionada en el mapa</small></div>
+            <label for="nombre">Nombre del lugar</label>
+            <input type="text" id="nombre" value="${escaparHTML(ubicacion.nombre)}" maxlength="80" required>
+            <label for="categoria">Categoría</label>
+            <select id="categoria">
+                <option value="publico">🚻 Baño público</option>
+                <option value="cafe">☕ Café/Bar</option>
+                <option value="estacion">⛽ Estación de servicio</option>
+                <option value="shopping">🏬 Shopping</option>
+                <option value="plaza">🌳 Plaza/Parque</option>
+                <option value="otro" selected>📍 Otro</option>
+            </select>
+            <label>¿Es gratis?</label>
+            <div class="pill-group" id="nuevoGratis">
+                <div class="pill active-green" data-val="true">Gratis</div>
+                <div class="pill" data-val="false">Pago</div>
+            </div>
+            ${switchHTML('nuevoAccesible', '♿', 'Accesible', false)}
+            ${switchHTML('nuevoPapel', '🧻', 'Papel higiénico', false)}
+            ${switchHTML('nuevoJabon', '🧼', 'Jabón/dispensador', false)}
+            ${switchHTML('nuevoCambiador', '👶', 'Cambiador de bebés', false)}
+            <label for="nuevoComentarios">Comentarios</label>
+            <textarea id="nuevoComentarios" rows="2" maxlength="300" placeholder="Opcional"></textarea>
+            <button class="guardarBtn" id="nuevoGuardarBtn">Guardar baño</button>
+        </div>`;
+    const popup = abrirPopupFormulario([ubicacion.lat, ubicacion.lng], formHtml);
+    setTimeout(() => {
+        let gratis = true;
+        document.querySelectorAll('#nuevoGratis .pill').forEach(pill => pill.addEventListener('click', () => {
+            document.querySelectorAll('#nuevoGratis .pill').forEach(item => item.classList.remove('active-green', 'active-orange'));
+            gratis = pill.dataset.val === 'true';
+            pill.classList.add(gratis ? 'active-green' : 'active-orange');
+        }));
+        const button = document.getElementById('nuevoGuardarBtn');
+        button.addEventListener('click', () => guardarNuevoBano(popup, button, gratis));
+        document.getElementById('nombre').focus();
+    }, 100);
+}
+
+async function guardarNuevoBano(popup, button, gratis) {
+    const nombre = document.getElementById('nombre').value.trim();
+    if (!nombre || !ubicacionAgregar) {
+        mostrarToast('Ingresá un nombre para el lugar.', 'error');
+        return;
+    }
+    button.disabled = true;
+    button.textContent = 'Guardando...';
+    const categoria = document.getElementById('categoria').value;
+    const datos = {
+        nombre,
+        categoria,
+        lat: ubicacionAgregar.lat,
+        lng: ubicacionAgregar.lng,
+        fotoUrl: '',
+        reportes: 0
+    };
+    try {
+        const banoRef = await addDoc(banosCol, datos);
+        const b = {
+            id: banoRef.id,
+            ...datos,
+            gratis,
+            accesible: document.getElementById('nuevoAccesible').checked,
+            papelHigienico: document.getElementById('nuevoPapel').checked,
+            jabon: document.getElementById('nuevoJabon').checked,
+            cambiador: document.getElementById('nuevoCambiador').checked,
+            avgLimpieza: 0,
+            numResenas: 0
+        };
+        const comentario = document.getElementById('nuevoComentarios').value.trim();
+        await addDoc(collection(db, 'banos', b.id, 'resenas'), {
+            gratis,
+            limpieza: 0,
+            accesible: b.accesible,
+            papelHigienico: b.papelHigienico,
+            jabon: b.jabon,
+            cambiador: b.cambiador,
+            comentarios: comentario,
+            fecha: serverTimestamp()
+        });
+        const marker = L.marker([b.lat, b.lng], { icon: iconoBano(b) });
+        marker.bindPopup(() => generarPopupHTML(b), POPUP_OPTS);
+        b.marker = marker;
+        banosCache.push(b);
+        actualizarMapa();
+        map.closePopup(popup);
+        if (marcadorTemporal) { map.removeLayer(marcadorTemporal); marcadorTemporal = null; }
+        modoAgregarBano = false;
+        ubicacionAgregar = null;
+        mostrarToast('¡Baño agregado! Gracias por colaborar.', 'success');
+    } catch (error) {
+        console.error('Error guardando baño:', error);
+        mostrarToast('No pudimos guardar el baño. Probá de nuevo.', 'error');
+        button.disabled = false;
+        button.textContent = 'Guardar baño';
+    }
+}
+
 function toggleChip(el, activo) { el.classList.toggle('chip-active', activo); }
 document.getElementById('chipGratis').addEventListener('click', function () { filtroSoloGratis = !filtroSoloGratis; toggleChip(this, filtroSoloGratis); actualizarMapa(); });
 document.getElementById('chipAccesible').addEventListener('click', function () { filtroSoloAccesible = !filtroSoloAccesible; toggleChip(this, filtroSoloAccesible); actualizarMapa(); });
@@ -577,16 +796,64 @@ document.getElementById('locateBtn').addEventListener('click', () => {
     );
 });
 
-// Add button now opens add modal (place search + select on map)
-document.getElementById('addBtn').addEventListener('click', () => {
-    centrarEnUsuario(16);
-    modoAgregarReview = true;
+function activarFallbackAgregar() {
+    modoAgregarBano = true;
+    document.getElementById('placesPanel').classList.add('hidden');
     document.getElementById('modoAgregarBanner').classList.remove('hidden');
+    document.getElementById('locBanner').classList.add('hidden');
+}
+
+function iniciarAltaBano() {
+    modoAgregarBano = true;
+    document.getElementById('modoAgregarBanner').classList.add('hidden');
+    if (userPos) {
+        map.setView([userPos.lat, userPos.lng], 16);
+        actualizarMarcadorUsuario();
+        abrirPanelLugares();
+        return;
+    }
+    if (!navigator.geolocation) {
+        activarFallbackAgregar();
+        return;
+    }
+    mostrarToast('Buscando tu ubicación...', 'info');
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            actualizarMarcadorUsuario();
+            map.setView([userPos.lat, userPos.lng], 16);
+            actualizarMapa();
+            abrirPanelLugares();
+        },
+        () => activarFallbackAgregar(),
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+document.getElementById('addBtn').addEventListener('click', iniciarAltaBano);
+document.getElementById('cancelarAgregarBtn').addEventListener('click', limpiarAltaBano);
+document.getElementById('placesCloseBtn').addEventListener('click', limpiarAltaBano);
+document.getElementById('placesManualBtn').addEventListener('click', () => {
+    document.getElementById('placesSearchRow').classList.remove('hidden');
+    document.getElementById('placesManualBtn').classList.add('hidden');
+    document.getElementById('placesSearchInput').focus();
+});
+document.getElementById('placesSearchBtn').addEventListener('click', () => {
+    buscarLugaresPorNombre(document.getElementById('placesSearchInput').value);
+});
+document.getElementById('placesSearchInput').addEventListener('input', (event) => {
+    clearTimeout(nominatimTimer);
+    nominatimTimer = setTimeout(() => buscarLugaresPorNombre(event.target.value), 400);
 });
 
-document.getElementById('cancelarAgregarBtn').addEventListener('click', () => {
-    modoAgregarReview = false;
+map.on('click', (event) => {
+    if (!modoAgregarBano || ubicacionAgregar) return;
+    modoAgregarBano = false;
     document.getElementById('modoAgregarBanner').classList.add('hidden');
+    ubicacionAgregar = { lat: event.latlng.lat, lng: event.latlng.lng, nombre: 'Lugar seleccionado en el mapa' };
+    if (marcadorTemporal) map.removeLayer(marcadorTemporal);
+    marcadorTemporal = L.marker([ubicacionAgregar.lat, ubicacionAgregar.lng], { zIndexOffset: 900 }).addTo(map);
+    abrirFormularioNuevoBano(ubicacionAgregar);
 });
 
 cargarBanos();

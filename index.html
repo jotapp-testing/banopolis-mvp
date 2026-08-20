@@ -53,7 +53,7 @@
 </div>
 
 <div id="modoAgregarBanner" class="hidden">
-  <span>Elegí un pin para reseñarlo</span>
+  <span>Tocá el mapa donde está el baño</span>
   <button id="cancelarAgregarBtn">Cancelar</button>
 </div>
 
@@ -65,6 +65,22 @@
     <span id="resultsCloseBtn">✕</span>
   </div>
   <div id="resultsList"></div>
+</div>
+
+<div id="placesPanel" class="hidden" aria-label="Lugares cercanos">
+  <div id="placesPanelHeader">
+    <div>
+      <span class="sheet-kicker">AGREGAR BAÑO</span>
+      <b>Lugares cerca tuyo</b>
+    </div>
+    <button id="placesCloseBtn" type="button" aria-label="Cerrar lugares">✕</button>
+  </div>
+  <div id="placesSearchRow" class="hidden">
+    <input id="placesSearchInput" type="search" placeholder="Ej. Café Martínez" autocomplete="off">
+    <button id="placesSearchBtn" type="button">Buscar</button>
+  </div>
+  <div id="placesList"></div>
+  <button id="placesManualBtn" class="sheet-secondary-btn" type="button">Buscar por nombre</button>
 </div>
 
 <div id="bottomNav">
@@ -91,7 +107,7 @@
 
 <div id="modalOverlay">
   <div id="modalBox">
-    <h2>🚽 Bienvenido a Bañópolis refactor</h2>
+    <h2>🚽 Bienvenido a Bañópolis nominatum</h2>
     <p>Un mapa colaborativo para encontrar baños en Buenos Aires: dónde están, si son gratis o pagos, qué tan limpios están, si son accesibles y si tienen papel, jabón o cambiador.</p>
     <ul>
       <li><b>Tocá un pin</b> para ver detalles o dejar tu reseña sobre ese baño.</li>
